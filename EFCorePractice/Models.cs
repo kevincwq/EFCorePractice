@@ -10,7 +10,7 @@ namespace EFCorePractice
 
         public string LastName { get; set; }
 
-        public List<Book> Books { get; set; } = new List<Book>();
+        public IList<Book> Books { get; set; } = new List<Book>();
     }
 
     public class Book
@@ -18,5 +18,8 @@ namespace EFCorePractice
         public long Id { get; set; }
 
         public string Title { get; set; }
+
+        public long AuthorId { get; set; }
+        public Author Author { get; set; }
     }
 }

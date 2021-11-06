@@ -7,12 +7,12 @@ using System.Threading.Tasks;
 
 namespace EFCorePractice.Tests
 {
-    public abstract class TestBase : IDisposable
+    public class DbContextFixture : IDisposable
     {
         private readonly DbConnection _connection;
         private readonly DbContextOptions<AppDbContext> _options;
 
-        public TestBase()
+        public DbContextFixture()
         {
             _options = new DbContextOptionsBuilder<AppDbContext>()
                  .UseSqlite(CreateInMemoryDatabase())
@@ -39,13 +39,12 @@ namespace EFCorePractice.Tests
         /// Indeed, when the context is disposed, the connection is closed and the database is destroyed.
         /// </summary>
         /// <returns></returns>
-        protected async Task<AppDbContext> CreateSQLiteDbContextAsync()
+        public async Task<AppDbContext> CreateContextAsync()
         {
             var context = new AppDbContext(_options);
 
             if (context != null)
             {
-                // await context.Database.EnsureDeletedAsync();
                 await context.Database.MigrateAsync();
             }
             return context;
