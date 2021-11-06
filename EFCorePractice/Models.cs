@@ -19,6 +19,8 @@ namespace EFCorePractice
 
         public string Title { get; set; }
 
+        public string Isbn { get; set; }
+
         public long AuthorId { get; set; }
         public Author Author { get; set; }
     }
