@@ -4,15 +4,18 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace EFCorePractice.Tests
 {
     public class CRUDTests : IClassFixture<DbContextFixture>
     {
         DbContextFixture dbFixture;
+        private readonly ITestOutputHelper output;
 
-        public CRUDTests(DbContextFixture fixture)
+        public CRUDTests(ITestOutputHelper output, DbContextFixture fixture)
         {
+            this.output = output;
             this.dbFixture = fixture;
         }
 
@@ -247,31 +250,48 @@ namespace EFCorePractice.Tests
         }
 
         [Fact]
-        public async Task Update_DbContextUpdate()
+        public async Task Update_ContextUpdate()
         {
             // Arrange
             var context = await dbFixture.CreateContextAsync();
-            var author = new Author { FirstName = "William", LastName = "Shakespeare" };
+            var publisher = new Publisher { Name = "ABC Press" };
+            var author = new Author
+            {
+                FirstName = "William",
+                LastName = "Shakespeare",
+                Books = new[] {
+                    new Book { Title = "Othello", Publisher = publisher }
+                }
+            };
             context.Add(author);
             await context.SaveChangesAsync();
-            context.ChangeTracker.Clear();
+            context.Entry(author).State = EntityState.Detached;
 
             // Act
-            var updatedAuthor = new Author { Id = author.Id, FirstName = "Bill", LastName = "Shake" };
-            // update or insert
+            var updatedAuthor = new Author
+            {
+                Id = author.Id,
+                FirstName = "Bill",
+                LastName = "Shake",
+                Books = new[] {
+                    new Book { Title = "Hamlet", Publisher = publisher }
+                }
+            };
+            // update or insert, new Book is inserted too
             context.Update(updatedAuthor);
             await context.SaveChangesAsync();
+            context.Entry(updatedAuthor).State = EntityState.Detached;
 
             // Assert
-            context.ChangeTracker.Clear();
-            var saved = await context.Authors.FindAsync(author.Id);
+            var saved = context.Authors.Include(a => a.Books).Where(a => a.Id == author.Id).Single();
             Assert.Equal("Bill", saved.FirstName);
             Assert.Equal("Shake", saved.LastName);
+            Assert.Equal(2, saved.Books.Count);
         }
 
 
         [Fact]
-        public async Task Update_AttachAndPatch_1()
+        public async Task Update_AttachAndPatch()
         {
             // Arrange
             var context = await dbFixture.CreateContextAsync();
