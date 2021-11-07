@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace EFCorePractice
 {
@@ -119,5 +120,22 @@ namespace EFCorePractice
         public string LastName { get; set; }
 
         public string Email { get; set; }
+
+        public User CreatedBy { get; set; }
+
+        public User UpdatedBy { get; set; }
+    }
+
+    public class User : BaseEntity
+    {
+        public long Id { get; set; }
+
+        public string UserName { get; set; }
+
+        [InverseProperty("CreatedBy")]
+        public List<Contact> ContactsCreated { get; set; }
+
+        [InverseProperty("UpdatedBy")]
+        public List<Contact> ContactsUpdated { get; set; }
     }
 }
