@@ -3,7 +3,13 @@ using System.Collections.Generic;
 
 namespace EFCorePractice
 {
-    public class Author
+    public abstract class BaseEntity
+    {
+        public DateTimeOffset CreatedUtc { get; set; }
+        public DateTimeOffset UpdatedUtc { get; set; }
+    }
+
+    public class Author: BaseEntity
     {
         public long Id { get; set; }
 
@@ -30,7 +36,7 @@ namespace EFCorePractice
         public ICollection<Book> Books { get; set; } = new List<Book>();
     }
 
-    public class Book
+    public class Book : BaseEntity
     {
         public long Id { get; set; }
 
@@ -38,6 +44,10 @@ namespace EFCorePractice
 
         public string Isbn { get; set; }
 
+        // The relationship is a required relationship.
+        // That means that a dependant cannot exist without its principal.
+        // If an author is deleted, all of the authors books must also be deleted.
+        // EF Core will set up this behaviour automatically if you explicitly include a non-nullable foreign key property,
         public long AuthorId { get; set; }
 
         public Author Author { get; set; }
@@ -50,7 +60,7 @@ namespace EFCorePractice
         public ICollection<Category> Categories { get; set; } = new List<Category>();
     }
 
-    public class Publisher
+    public class Publisher : BaseEntity
     {
         public long Id { get; set; }
 
@@ -62,7 +72,7 @@ namespace EFCorePractice
         public ICollection<Book> Books { get; set; } = new List<Book>();
     }
 
-    public class Category
+    public class Category : BaseEntity
     {
         public long Id { get; set; }
         public string CategoryName { get; set; }
@@ -70,7 +80,7 @@ namespace EFCorePractice
         public ICollection<Book> Books { get; set; } = new List<Book>();
     }
 
-    public class Address
+    public class Address : BaseEntity
     {
         public long Id { get; set; }
 
@@ -83,7 +93,7 @@ namespace EFCorePractice
         public string Country { get; set; }
     }
 
-    public class AuthorBiography
+    public class AuthorBiography : BaseEntity
     {
         public long Id { get; set; }
 
@@ -100,7 +110,7 @@ namespace EFCorePractice
         public Author Author { get; set; }
     }
 
-    public class Contact
+    public class Contact : BaseEntity
     {
         public long Id { get; set; }
 

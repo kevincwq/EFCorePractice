@@ -1,5 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using System;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace EFCorePractice
 {
@@ -34,18 +37,33 @@ namespace EFCorePractice
             base.OnModelCreating(modelBuilder);
         }
 
-        //public override int SaveChanges()
-        //{
-        //    ChangeTracker.DetectChanges();
+        private void UpdateUtcs()
+        {
+            var entries = ChangeTracker
+                .Entries()
+                .Where(e => e.Entity is BaseEntity && (e.State == EntityState.Added || e.State == EntityState.Modified));
 
-        //    foreach (var entry in ChangeTracker.Entries())
-        //    {
-        //        if (entry.State == EntityState.Added || entry.State == EntityState.Modified)
-        //        {
-        //            entry.Property("LastUpdated").CurrentValue = DateTime.UtcNow;
-        //        }
-        //    }
-        //    return base.SaveChanges();
-        //}
+            foreach (var entityEntry in entries)
+            {
+                ((BaseEntity)entityEntry.Entity).UpdatedUtc = DateTimeOffset.UtcNow;
+
+                if (entityEntry.State == EntityState.Added)
+                {
+                    ((BaseEntity)entityEntry.Entity).CreatedUtc = DateTimeOffset.UtcNow;
+                }
+            }
+        }
+
+        public override int SaveChanges(bool acceptAllChangesOnSuccess)
+        {
+            UpdateUtcs();
+            return base.SaveChanges(acceptAllChangesOnSuccess);
+        }
+
+        public async override Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
+        {
+            UpdateUtcs();
+            return await base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+        }
     }
 }
