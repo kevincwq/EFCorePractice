@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace EFCorePractice
@@ -7,6 +8,7 @@ namespace EFCorePractice
     public abstract class BaseEntity
     {
         public DateTimeOffset CreatedUtc { get; set; }
+
         public DateTimeOffset UpdatedUtc { get; set; }
     }
 
@@ -14,8 +16,10 @@ namespace EFCorePractice
     {
         public long Id { get; set; }
 
+        [Required]
         public string FirstName { get; set; }
 
+        [Required]
         public string LastName { get; set; }
 
         // One to One/Zero
@@ -35,12 +39,16 @@ namespace EFCorePractice
         // One to Many
         // a Collection navigation property having a multiplicity of many
         public ICollection<Book> Books { get; set; } = new List<Book>();
+
+        [NotMapped]
+        public string FullName => $"{FirstName} {LastName}";
     }
 
     public class Book : BaseEntity
     {
         public long Id { get; set; }
 
+        [Required]
         public string Title { get; set; }
 
         public string Isbn { get; set; }
@@ -65,6 +73,7 @@ namespace EFCorePractice
     {
         public long Id { get; set; }
 
+        [Required]
         public string Name { get; set; }
 
         public Address Address { get; set; }
@@ -76,6 +85,8 @@ namespace EFCorePractice
     public class Category : BaseEntity
     {
         public long Id { get; set; }
+
+        [Required]
         public string CategoryName { get; set; }
 
         public ICollection<Book> Books { get; set; } = new List<Book>();
@@ -115,21 +126,28 @@ namespace EFCorePractice
     {
         public long Id { get; set; }
 
+        [Required]
         public string FirstName { get; set; }
 
+        [Required]
         public string LastName { get; set; }
 
+        [Required]
         public string Email { get; set; }
 
         public User CreatedBy { get; set; }
 
         public User UpdatedBy { get; set; }
+
+        [NotMapped]
+        public string FullName => $"{FirstName} {LastName}";
     }
 
     public class User : BaseEntity
     {
         public long Id { get; set; }
 
+        [Required]
         public string UserName { get; set; }
 
         [InverseProperty("CreatedBy")]
