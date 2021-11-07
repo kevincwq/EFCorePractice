@@ -14,6 +14,12 @@ namespace EFCorePractice
 
         public DbSet<Author> Authors { get; set; }
 
+        public DbSet<AuthorBiography> AuthorBiographies { get; set; }
+
+        public DbSet<Address> Addresses { get; set; }
+
+        public DbSet<Publisher> Publishers { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);

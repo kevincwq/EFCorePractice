@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using System;
 using System.Data.Common;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace EFCorePractice.Tests
@@ -45,9 +46,27 @@ namespace EFCorePractice.Tests
 
             if (context != null)
             {
+                // await context.Database.EnsureDeletedAsync();
                 await context.Database.MigrateAsync();
             }
+
+            await ClearAllDataAsync(context);
+
             return context;
+        }
+
+        private async Task ClearAllDataAsync(AppDbContext context)
+        {
+            // var dbContext = await CreateContextAsync();
+            //var tableNames = dbContext.Model.GetEntityTypes().Select(t => $"{t.GetSchema()}.\"{t.GetTableName()}\"").Distinct().ToList();
+            //await dbContext.Database.ExecuteSqlRawAsync($"TRUNCATE TABLE {string.Join(",", tableNames)}");
+
+            context.RemoveRange(context.Books);
+            context.RemoveRange(context.AuthorBiographies);
+            context.RemoveRange(context.Authors);
+            context.RemoveRange(context.Publishers);
+            context.RemoveRange(context.Addresses);
+            await context.SaveChangesAsync();
         }
 
         /// <summary>

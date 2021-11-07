@@ -3,14 +3,16 @@ using System;
 using EFCorePractice;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace EFCorePractice.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20211107043955_AddMoreModels")]
+    partial class AddMoreModels
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -36,7 +38,7 @@ namespace EFCorePractice.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Addresses");
+                    b.ToTable("Address");
                 });
 
             modelBuilder.Entity("EFCorePractice.Author", b =>
@@ -87,7 +89,7 @@ namespace EFCorePractice.Migrations
                     b.HasIndex("AuthorId")
                         .IsUnique();
 
-                    b.ToTable("AuthorBiographies");
+                    b.ToTable("AuthorBiography");
                 });
 
             modelBuilder.Entity("EFCorePractice.Book", b =>
@@ -133,7 +135,7 @@ namespace EFCorePractice.Migrations
 
                     b.HasIndex("AddressId");
 
-                    b.ToTable("Publishers");
+                    b.ToTable("Publisher");
                 });
 
             modelBuilder.Entity("EFCorePractice.Author", b =>
