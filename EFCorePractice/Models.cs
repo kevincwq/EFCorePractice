@@ -11,9 +11,11 @@ namespace EFCorePractice
 
         public string LastName { get; set; }
 
+        // One to One/Zero
         // a Reference navigation property having a multiplicity of zero or one
         public Address Address { get; set; }
 
+        // One to One/Zero
         // A one to one (or more usually a one to zero or one) relationship exists
         // when only one row of data in the principal table is linked to zero or one row in a dependent table.
         // Note:
@@ -23,6 +25,7 @@ namespace EFCorePractice
         // For example, you may want to apply extra database security to the dependent table because it contains confidential information (an employee's health record, for example), or you just want to move data that isn't referenced very often into a separate table to improve search and retrieval times for data that is used all the time.
         public AuthorBiography Biography { get; set; }
 
+        // One to Many
         // a Collection navigation property having a multiplicity of many
         public ICollection<Book> Books { get; set; } = new List<Book>();
     }
@@ -43,6 +46,7 @@ namespace EFCorePractice
 
         public Publisher Publisher { get; set; }
 
+        // Many to Many
         public ICollection<Category> Categories { get; set; } = new List<Category>();
     }
 
@@ -54,6 +58,7 @@ namespace EFCorePractice
 
         public Address Address { get; set; }
 
+        // Many to Many
         public ICollection<Book> Books { get; set; } = new List<Book>();
     }
 
