@@ -9,19 +9,19 @@ using Xunit.Abstractions;
 
 namespace EFCorePractice.Tests
 {
-    public class IncludeTests : IClassFixture<DbContextFixture>
+    public class NoTrackingTests : IClassFixture<DbContextFixture>
     {
         DbContextFixture dbFixture;
         private readonly ITestOutputHelper output;
 
-        public IncludeTests(ITestOutputHelper output, DbContextFixture fixture)
+        public NoTrackingTests(ITestOutputHelper output, DbContextFixture fixture)
         {
             this.output = output;
             this.dbFixture = fixture;
         }
 
         [Fact]
-        public async Task Include_All()
+        public async Task NoTracking_SingleQuery()
         {
             // Arrange
             var context = await dbFixture.CreateContextAsync();
@@ -42,21 +42,18 @@ namespace EFCorePractice.Tests
             await context.SaveChangesAsync();
 
             // Act
-            var query = context.Authors.Where(a => a.FirstName == "William").Include(a => a.Books).ThenInclude(b => b.Publisher).ThenInclude(p => p.Address).Include(a => a.Address).Include(a => a.Biography);
+            var query = context.Authors.Where(a => a.FirstName == "William").AsNoTracking();
             output.WriteLine($"SQL: {query.ToQueryString()}");
             var saved = query.Single();
 
             // Assert
             Assert.Equal(author.FirstName, saved.FirstName);
-            Assert.Equal(author.Books.Count(), saved.Books.Count());
-            Assert.Equal(author.Address.City, saved.Address.City);
-            Assert.Equal(author.Biography.DateOfBirth, saved.Biography.DateOfBirth);
-            Assert.True(saved.Books.All(b => b.Publisher.Name == publisher.Name));
+            Assert.Equal(EntityState.Detached, context.Entry(saved).State);
         }
 
 
         [Fact]
-        public async Task Include_NonEntityType()
+        public async Task NoTracking_AllQuery()
         {
             // Arrange
             var context = await dbFixture.CreateContextAsync();
@@ -77,16 +74,14 @@ namespace EFCorePractice.Tests
             await context.SaveChangesAsync();
 
             // Act
-            var query = context.Authors.Where(a => a.FirstName == "William").Include(a => a.Books).ThenInclude(b => b.Publisher).ThenInclude(p => p.Address).Include(a => a.Address).Include(a => a.Biography).Select(a => new { a.FirstName, Count = a.Books.Count(), a.Address.City, a.Biography.DateOfBirth, PubName = a.Books.First().Publisher.Name });
-            output.WriteLine($"SQL: {query.ToQueryString()}");
-            var saved = query.Single();
+            context.ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
+
+            var saved = context.Authors.Where(a => a.FirstName == "William").Single();
+            saved = context.Authors.Where(a => a.LastName == "Shakespeare").Single();
 
             // Assert
             Assert.Equal(author.FirstName, saved.FirstName);
-            Assert.Equal(author.Books.Count(), saved.Count);
-            Assert.Equal(author.Address.City, saved.City);
-            Assert.Equal(author.Biography.DateOfBirth, saved.DateOfBirth);
-            Assert.Equal(publisher.Name, saved.PubName);
+            Assert.Equal(EntityState.Detached, context.Entry(saved).State);
         }
     }
 }
