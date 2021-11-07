@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using System;
 
 namespace EFCorePractice
 {
@@ -20,9 +21,29 @@ namespace EFCorePractice
 
         public DbSet<Publisher> Publishers { get; set; }
 
+        public DbSet<Contact> Contacts { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            // Shadow properties
+            modelBuilder.Entity<Contact>()
+                .Property<DateTime>("LastUpdated");
+
             base.OnModelCreating(modelBuilder);
         }
+
+        //public override int SaveChanges()
+        //{
+        //    ChangeTracker.DetectChanges();
+
+        //    foreach (var entry in ChangeTracker.Entries())
+        //    {
+        //        if (entry.State == EntityState.Added || entry.State == EntityState.Modified)
+        //        {
+        //            entry.Property("LastUpdated").CurrentValue = DateTime.UtcNow;
+        //        }
+        //    }
+        //    return base.SaveChanges();
+        //}
     }
 }
