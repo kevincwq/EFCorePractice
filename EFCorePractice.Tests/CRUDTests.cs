@@ -43,7 +43,7 @@ namespace EFCorePractice.Tests
         }
 
         [Fact]
-        public async Task Add_RelationalRecords_1()
+        public async Task Add_Relationship_OneToMany()
         {
             // Arrange
             var context = await dbFixture.CreateContextAsync();
@@ -73,7 +73,7 @@ namespace EFCorePractice.Tests
         }
 
         [Fact]
-        public async Task Add_RelationalRecords_2()
+        public async Task Add_Relationship_ManyToOne()
         {
             // Arrange
             var context = await dbFixture.CreateContextAsync();
@@ -93,97 +93,6 @@ namespace EFCorePractice.Tests
             Assert.Equal(1, context.Authors.Count());
             Assert.Equal(1, context.Publishers.Count());
             Assert.Equal(3, context.Books.Count());
-        }
-
-        [Fact]
-        public async Task Add_RelationalRecords_3()
-        {
-            // Arrange
-            var context = await dbFixture.CreateContextAsync();
-
-            // Act
-            var book = new Book
-            {
-                Title = "King Lear",
-                Author = new Author
-                {
-                    FirstName = "William",
-                    LastName = "Shakespeare"
-                },
-                Publisher = new Publisher
-                {
-                    Name = "ABC Press"
-                }
-            };
-            context.Add(book); // Book Added, Author Added
-            await context.SaveChangesAsync();
-
-            // Assert
-            Assert.Equal(1, context.Authors.Count());
-            Assert.Equal(1, context.Publishers.Count());
-            Assert.Equal(1, context.Books.Count());
-        }
-
-        [Fact]
-        public async Task Add_RelationalRecords_4()
-        {
-            // Arrange
-            var context = await dbFixture.CreateContextAsync();
-
-            // Act
-            var author = new Author { FirstName = "William", LastName = "Shakespeare" };
-            var publisher = new Publisher { Name = "ABC Press" };
-            context.AddRange(author, publisher);
-            await context.SaveChangesAsync();
-
-            var book = new Book { Title = "Romeo and Juliet" };
-            book.Author = context.Authors.Single(a => a.Id == author.Id); //  Author Unchanged
-            book.Publisher = context.Publishers.Single(a => a.Id == publisher.Id); // Publisher Unchanged
-            book.Author.FirstName = "Bill"; // Author Modified
-            context.Add(book); // Book Added, Author Modified
-            await context.SaveChangesAsync();
-
-            // Assert
-            context.ChangeTracker.Clear();
-            Assert.Equal(1, context.Authors.Count());
-            Assert.Equal(1, context.Publishers.Count());
-            Assert.Equal(1, context.Books.Count());
-            var saved = context.Authors.Single(a => a.Id == author.Id);
-            Assert.Equal("Bill", saved.FirstName);
-        }
-
-        [Fact]
-        public async Task Add_RelationalRecords_5()
-        {
-            // Arrange
-            var context = await dbFixture.CreateContextAsync();
-
-            // Act
-            var book = new Book { Title = "Romeo and Juliet", Author = new Author { FirstName = "William", LastName = "Shakespeare" }, Publisher = new Publisher { Name = "ABC Press" } };
-            context.Add(book);
-            await context.SaveChangesAsync();
-            context.ChangeTracker.Clear();
-
-            var bookToUpdate = new Book
-            {
-                Id = book.Id,
-                Author = new Author
-                {
-                    FirstName = "Charles",
-                    LastName = "Dickens"
-                }
-            };
-            context.Attach(bookToUpdate); // Book Modified, Author Added - no "store generated key", Publisher unchanged
-            await context.SaveChangesAsync();
-
-            // Assert
-            context.ChangeTracker.Clear();
-            var saved = context.Books.Include(b => b.Author).Include(b => b.Publisher).Single(a => a.Id == book.Id);
-            Assert.Equal(bookToUpdate.Author.Id, saved.Author.Id);
-            Assert.Equal(book.Publisher.Id, saved.Publisher.Id);
-            Assert.Equal(2, context.Authors.Count());
-            Assert.Equal(1, context.Publishers.Count());
-            Assert.Equal(1, context.Books.Count());
         }
 
         [Fact]
@@ -413,6 +322,91 @@ namespace EFCorePractice.Tests
             Assert.Equal(updatedAuthor.Books.Count(), saved.Books.Count());
             Assert.True(saved.Books.All(b => !string.IsNullOrWhiteSpace(b.Isbn)));
             Assert.True(saved.Books.All(b => b.Publisher.Id == publisher.Id));
+        }
+
+
+        [Fact]
+        public async Task Update_Relationship_Tracked()
+        {
+            // Arrange
+            var context = await dbFixture.CreateContextAsync();
+            var author = new Author { FirstName = "William", LastName = "Shakespeare" };
+            var publisher = new Publisher { Name = "ABC Press" };
+            context.AddRange(author, publisher);
+            await context.SaveChangesAsync();
+
+            // Act
+            var book = new Book { Title = "Romeo and Juliet" };
+            book.Author = context.Authors.Single(a => a.Id == author.Id); //  Author Unchanged
+            book.Publisher = context.Publishers.Single(a => a.Id == publisher.Id); // Publisher Unchanged
+            book.Author.FirstName = "Bill"; // Author Modified
+            context.Add(book); // Book Added, Author Modified
+            await context.SaveChangesAsync();
+
+            // Assert
+            context.ChangeTracker.Clear();
+            Assert.Equal(1, context.Authors.Count());
+            Assert.Equal(1, context.Publishers.Count());
+            Assert.Equal(1, context.Books.Count());
+            var saved = context.Authors.Single(a => a.Id == author.Id);
+            Assert.Equal("Bill", saved.FirstName);
+        }
+
+        [Fact]
+        public async Task Update_Relationship_FakeStub()
+        {
+            // Arrange
+            var context = await dbFixture.CreateContextAsync();
+            var book = new Book { Title = "Romeo and Juliet", Author = new Author { FirstName = "William", LastName = "Shakespeare" }, Publisher = new Publisher { Name = "ABC Press" } };
+            context.Add(book);
+            await context.SaveChangesAsync();
+            context.ChangeTracker.Clear();
+
+            // Act
+            var stub = new Book { Id = book.Id };
+            context.Attach(stub);
+            stub.Author = new Author
+            {
+                FirstName = "Charles",
+                LastName = "Dickens"
+            };
+            // Book Modified, Author Added - no "store generated key", Publisher unchanged
+            await context.SaveChangesAsync();
+
+            // Assert
+            context.ChangeTracker.Clear();
+            var saved = context.Books.Include(b => b.Author).Include(b => b.Publisher).Single(a => a.Id == book.Id);
+            Assert.Equal(stub.Author.Id, saved.Author.Id);
+            Assert.Equal(book.Publisher.Id, saved.Publisher.Id);
+            Assert.Equal(2, context.Authors.Count());
+            Assert.Equal(1, context.Publishers.Count());
+            Assert.Equal(1, context.Books.Count());
+        }
+
+        [Fact]
+        public async Task Update_Relationship_FK()
+        {
+            // Arrange
+            var context = await dbFixture.CreateContextAsync();
+            var book = new Book { Title = "Romeo and Juliet", Author = new Author { FirstName = "William", LastName = "Shakespeare" }, Publisher = new Publisher { Name = "ABC Press" } };
+            var author = new Author { FirstName = "Bill", LastName = "Shakespeare" };
+            context.AddRange(book, author);
+            await context.SaveChangesAsync();
+            context.ChangeTracker.Clear();
+
+            // Act
+            var newBook = new Book { Title = "The Winters Tale", AuthorId = author.Id, PublisherId = book.Publisher.Id };
+            context.Add(newBook);
+            await context.SaveChangesAsync();
+
+            // Assert
+            context.ChangeTracker.Clear();
+            var saved = context.Books.Include(b => b.Author).Include(b => b.Publisher).Single(a => a.Id == newBook.Id);
+            Assert.Equal(author.FirstName, saved.Author.FirstName);
+            Assert.Equal(book.Publisher.Name, saved.Publisher.Name);
+            Assert.Equal(2, context.Authors.Count());
+            Assert.Equal(1, context.Publishers.Count());
+            Assert.Equal(2, context.Books.Count());
         }
 
         #endregion
