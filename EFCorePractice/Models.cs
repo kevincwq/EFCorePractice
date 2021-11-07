@@ -10,6 +10,9 @@ namespace EFCorePractice
         public DateTimeOffset CreatedUtc { get; set; }
 
         public DateTimeOffset UpdatedUtc { get; set; }
+
+        [Timestamp]
+        public byte[] RowVersion { get; set; }
     }
 
     public class Author: BaseEntity
