@@ -11,10 +11,19 @@ namespace EFCorePractice
 
         public string LastName { get; set; }
 
+        // a Reference navigation property having a multiplicity of zero or one
         public Address Address { get; set; }
 
+        // A one to one (or more usually a one to zero or one) relationship exists
+        // when only one row of data in the principal table is linked to zero or one row in a dependent table.
+        // Note:
+        // - One reason for implementing this kind of relationship is when you are working with inheritance.
+        // For example, you may have a Vehicle entity, with sub classes such as Car, Truck, Motorcycle etc.
+        // - Other reasons include database design and/or efficiency.
+        // For example, you may want to apply extra database security to the dependent table because it contains confidential information (an employee's health record, for example), or you just want to move data that isn't referenced very often into a separate table to improve search and retrieval times for data that is used all the time.
         public AuthorBiography Biography { get; set; }
 
+        // a Collection navigation property having a multiplicity of many
         public ICollection<Book> Books { get; set; } = new List<Book>();
     }
 
@@ -33,6 +42,8 @@ namespace EFCorePractice
         public long PublisherId { get; set; }
 
         public Publisher Publisher { get; set; }
+
+        public ICollection<Category> Categories { get; set; } = new List<Category>();
     }
 
     public class Publisher
@@ -42,6 +53,14 @@ namespace EFCorePractice
         public string Name { get; set; }
 
         public Address Address { get; set; }
+
+        public ICollection<Book> Books { get; set; } = new List<Book>();
+    }
+
+    public class Category
+    {
+        public long Id { get; set; }
+        public string CategoryName { get; set; }
 
         public ICollection<Book> Books { get; set; } = new List<Book>();
     }
