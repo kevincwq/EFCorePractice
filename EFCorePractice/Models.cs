@@ -1,7 +1,7 @@
-﻿using System;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace EFCorePractice
 {
@@ -11,18 +11,26 @@ namespace EFCorePractice
 
         public DateTimeOffset UpdatedUtc { get; set; }
 
-        [Timestamp]
+        // [Timestamp]
         public byte[] RowVersion { get; set; }
     }
 
-    public class Author: BaseEntity
+    public abstract class BaseEntityTypeConfiguration<TBase> : IEntityTypeConfiguration<TBase> where TBase : BaseEntity
+    {
+        public virtual void Configure(EntityTypeBuilder<TBase> entityTypeBuilder)
+        {
+            entityTypeBuilder.Property(p => p.RowVersion).IsRowVersion();
+        }
+    }
+
+    public class Author : BaseEntity
     {
         public long Id { get; set; }
 
-        [Required]
+        // [Required]
         public string FirstName { get; set; }
 
-        [Required]
+        // [Required]
         public string LastName { get; set; }
 
         // One to One/Zero
@@ -43,15 +51,26 @@ namespace EFCorePractice
         // a Collection navigation property having a multiplicity of many
         public ICollection<Book> Books { get; set; } = new List<Book>();
 
-        [NotMapped]
+        // [NotMapped]
         public string FullName => $"{FirstName} {LastName}";
+    }
+
+    public class AuthorTypeConfiguration : BaseEntityTypeConfiguration<Author>
+    {
+        public override void Configure(EntityTypeBuilder<Author> entityTypeBuilder)
+        {
+            entityTypeBuilder.Property(b => b.FirstName).IsRequired();
+            entityTypeBuilder.Property(b => b.LastName).IsRequired();
+            entityTypeBuilder.Ignore(b => b.FullName);
+            base.Configure(entityTypeBuilder);
+        }
     }
 
     public class Book : BaseEntity
     {
         public long Id { get; set; }
 
-        [Required]
+        // [Required]
         public string Title { get; set; }
 
         public string Isbn { get; set; }
@@ -72,11 +91,20 @@ namespace EFCorePractice
         public ICollection<Category> Categories { get; set; } = new List<Category>();
     }
 
+    public class BookTypeConfiguration : BaseEntityTypeConfiguration<Book>
+    {
+        public override void Configure(EntityTypeBuilder<Book> entityTypeBuilder)
+        {
+            entityTypeBuilder.Property(b => b.Title).IsRequired();
+            base.Configure(entityTypeBuilder);
+        }
+    }
+
     public class Publisher : BaseEntity
     {
         public long Id { get; set; }
 
-        [Required]
+        // [Required]
         public string Name { get; set; }
 
         public Address Address { get; set; }
@@ -85,14 +113,32 @@ namespace EFCorePractice
         public ICollection<Book> Books { get; set; } = new List<Book>();
     }
 
+    public class PublisherTypeConfiguration : BaseEntityTypeConfiguration<Publisher>
+    {
+        public override void Configure(EntityTypeBuilder<Publisher> entityTypeBuilder)
+        {
+            entityTypeBuilder.Property(b => b.Name).IsRequired();
+            base.Configure(entityTypeBuilder);
+        }
+    }
+
     public class Category : BaseEntity
     {
         public long Id { get; set; }
 
-        [Required]
-        public string CategoryName { get; set; }
+        // [Required]
+        public string Name { get; set; }
 
         public ICollection<Book> Books { get; set; } = new List<Book>();
+    }
+
+    public class CategoryTypeConfiguration : BaseEntityTypeConfiguration<Category>
+    {
+        public override void Configure(EntityTypeBuilder<Category> entityTypeBuilder)
+        {
+            entityTypeBuilder.Property(b => b.Name).IsRequired();
+            base.Configure(entityTypeBuilder);
+        }
     }
 
     public class Address : BaseEntity
@@ -106,6 +152,18 @@ namespace EFCorePractice
         public string StateOrProvince { get; set; }
 
         public string Country { get; set; }
+    }
+
+    public class AddressTypeConfiguration : BaseEntityTypeConfiguration<Address>
+    {
+        public override void Configure(EntityTypeBuilder<Address> entityTypeBuilder)
+        {
+            entityTypeBuilder.Property(b => b.City).IsRequired();
+            entityTypeBuilder.Property(b => b.Street).IsRequired();
+            entityTypeBuilder.Property(b => b.StateOrProvince).IsRequired();
+            entityTypeBuilder.Property(b => b.Country).IsRequired();
+            base.Configure(entityTypeBuilder);
+        }
     }
 
     public class AuthorBiography : BaseEntity
@@ -125,38 +183,72 @@ namespace EFCorePractice
         public Author Author { get; set; }
     }
 
+    public class AuthorBiographyTypeConfiguration : BaseEntityTypeConfiguration<AuthorBiography>
+    {
+        public override void Configure(EntityTypeBuilder<AuthorBiography> entityTypeBuilder)
+        {
+            entityTypeBuilder.Property(b => b.Biography).IsRequired();
+            base.Configure(entityTypeBuilder);
+        }
+    }
+
     public class Contact : BaseEntity
     {
         public long Id { get; set; }
 
-        [Required]
+        // [Required]
         public string FirstName { get; set; }
 
-        [Required]
+        // [Required]
         public string LastName { get; set; }
 
-        [Required]
+        // [Required]
         public string Email { get; set; }
 
         public User CreatedBy { get; set; }
 
         public User UpdatedBy { get; set; }
 
-        [NotMapped]
+        // [NotMapped]
         public string FullName => $"{FirstName} {LastName}";
+    }
+
+    public class ContactTypeConfiguration : BaseEntityTypeConfiguration<Contact>
+    {
+        public override void Configure(EntityTypeBuilder<Contact> entityTypeBuilder)
+        {
+            // shadow property
+            entityTypeBuilder.Property<DateTime>("LastUpdated");
+            entityTypeBuilder.Property(b => b.FirstName).IsRequired();
+            entityTypeBuilder.Property(b => b.LastName).IsRequired();
+            entityTypeBuilder.Property(b => b.Email).IsRequired();
+            entityTypeBuilder.Ignore(b => b.FullName);
+            base.Configure(entityTypeBuilder);
+        }
     }
 
     public class User : BaseEntity
     {
         public long Id { get; set; }
 
-        [Required]
+        // [Required]
         public string UserName { get; set; }
 
-        [InverseProperty("CreatedBy")]
+        // [InverseProperty("CreatedBy")]
         public List<Contact> ContactsCreated { get; set; }
 
-        [InverseProperty("UpdatedBy")]
+        // [InverseProperty("UpdatedBy")]
         public List<Contact> ContactsUpdated { get; set; }
+    }
+
+    public class UserTypeConfiguration : BaseEntityTypeConfiguration<User>
+    {
+        public override void Configure(EntityTypeBuilder<User> entityTypeBuilder)
+        {
+            entityTypeBuilder.Property(b => b.UserName).IsRequired();
+            entityTypeBuilder.HasMany(u => u.ContactsCreated).WithOne(c => c.CreatedBy);
+            entityTypeBuilder.HasMany(u => u.ContactsUpdated).WithOne(c => c.UpdatedBy);
+            base.Configure(entityTypeBuilder);
+        }
     }
 }

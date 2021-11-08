@@ -30,10 +30,7 @@ namespace EFCorePractice
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            // Shadow properties
-            modelBuilder.Entity<Contact>()
-                .Property<DateTime>("LastUpdated");
-
+            modelBuilder.ApplyConfigurationsFromAssembly(GetType().Assembly);
             base.OnModelCreating(modelBuilder);
         }
 
