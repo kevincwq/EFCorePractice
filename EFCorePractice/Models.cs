@@ -259,4 +259,35 @@ namespace EFCorePractice
             base.Configure(entityTypeBuilder);
         }
     }
+
+    public abstract class Contract : BaseEntity
+    {
+        public long Id { get; set; }
+        public DateTime StartDate { get; set; }
+        public int Months { get; set; }
+        public decimal Charge { get; set; }
+    }
+
+    public class MobileContract : Contract
+    {
+        public string MobileNumber { get; set; }
+    }
+
+    public class BroadbandContract : Contract
+    {
+        public int DownloadSpeed { get; set; }
+    }
+
+    public class ContractConfiguration : BaseEntityTypeConfiguration<Contract>
+    {
+        public override void Configure(EntityTypeBuilder<Contract> entityTypeBuilder)
+        {
+            // configure discriminator values for entities in an inheritance hierarchy when a table per hierarchy approach is chosen for mapping inheritance to a database.
+            entityTypeBuilder.ToTable("Contracts")
+            .HasDiscriminator<int>("ContractType")
+            .HasValue<MobileContract>(1)
+            .HasValue<BroadbandContract>(2);
+            base.Configure(entityTypeBuilder);
+        }
+    }
 }

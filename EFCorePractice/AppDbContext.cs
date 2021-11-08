@@ -28,6 +28,10 @@ namespace EFCorePractice
 
         public DbSet<Category> Categories { get; set; }
 
+        public DbSet<MobileContract> MobileContracts { get; set; }
+
+        public DbSet<BroadbandContract> BroadbandContracts { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.ApplyConfigurationsFromAssembly(GetType().Assembly);
