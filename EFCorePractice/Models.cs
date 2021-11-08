@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Microsoft.EntityFrameworkCore.ValueGeneration;
 using System;
 using System.Collections.Generic;
 
@@ -96,6 +97,9 @@ namespace EFCorePractice
         public override void Configure(EntityTypeBuilder<Book> entityTypeBuilder)
         {
             entityTypeBuilder.Property(b => b.Title).IsRequired();
+            entityTypeBuilder.Property(b => b.Isbn).IsRequired();
+            entityTypeBuilder.HasIndex(b => b.Title);
+            entityTypeBuilder.HasIndex(b => b.Isbn).IsUnique();
             base.Configure(entityTypeBuilder);
         }
     }
@@ -118,6 +122,7 @@ namespace EFCorePractice
         public override void Configure(EntityTypeBuilder<Publisher> entityTypeBuilder)
         {
             entityTypeBuilder.Property(b => b.Name).IsRequired();
+            entityTypeBuilder.HasAlternateKey(b => b.Name);
             base.Configure(entityTypeBuilder);
         }
     }
@@ -137,6 +142,7 @@ namespace EFCorePractice
         public override void Configure(EntityTypeBuilder<Category> entityTypeBuilder)
         {
             entityTypeBuilder.Property(b => b.Name).IsRequired();
+            entityTypeBuilder.HasAlternateKey(b => b.Name);
             base.Configure(entityTypeBuilder);
         }
     }
@@ -219,6 +225,7 @@ namespace EFCorePractice
         {
             // shadow property
             entityTypeBuilder.Property<DateTime>("LastUpdated");
+            entityTypeBuilder.HasAlternateKey(b => b.Email);
             entityTypeBuilder.Property(b => b.FirstName).IsRequired();
             entityTypeBuilder.Property(b => b.LastName).IsRequired();
             entityTypeBuilder.Property(b => b.Email).IsRequired();
@@ -246,6 +253,7 @@ namespace EFCorePractice
         public override void Configure(EntityTypeBuilder<User> entityTypeBuilder)
         {
             entityTypeBuilder.Property(b => b.UserName).IsRequired();
+            entityTypeBuilder.HasAlternateKey(b => b.UserName);
             entityTypeBuilder.HasMany(u => u.ContactsCreated).WithOne(c => c.CreatedBy);
             entityTypeBuilder.HasMany(u => u.ContactsUpdated).WithOne(c => c.UpdatedBy);
             base.Configure(entityTypeBuilder);

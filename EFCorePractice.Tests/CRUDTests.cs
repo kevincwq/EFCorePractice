@@ -56,9 +56,9 @@ namespace EFCorePractice.Tests
                 LastName = "Shakespeare",
                 Books = new List<Book>
                 {
-                    new Book { Title = "Hamlet", Publisher = publisher },
-                    new Book { Title = "Othello", Publisher = publisher},
-                    new Book { Title = "MacBeth", Publisher = publisher }
+                    new Book { Title = "Hamlet", Isbn = "1234", Publisher = publisher },
+                    new Book { Title = "Othello", Isbn = "2345", Publisher = publisher},
+                    new Book { Title = "MacBeth", Isbn = "3456", Publisher = publisher }
                 }
             };
             // Tells EF that the entity is new and should be inserted into the database, and so sets the state to Added.
@@ -82,9 +82,9 @@ namespace EFCorePractice.Tests
             var publisher = new Publisher { Name = "ABC Press" };
             var author = new Author { FirstName = "Stephen", LastName = "King" };
             var books = new List<Book> {
-                new Book { Title = "It", Author = author, Publisher = publisher },
-                new Book { Title = "Carrie", Author = author, Publisher = publisher },
-                new Book { Title = "Misery", Author = author, Publisher = publisher }
+                new Book { Title = "It", Isbn = "1234", Author = author, Publisher = publisher },
+                new Book { Title = "Carrie", Isbn = "2345", Author = author, Publisher = publisher },
+                new Book { Title = "Misery", Isbn = "3456", Author = author, Publisher = publisher }
             };
             context.AddRange(books);
             await context.SaveChangesAsync();
@@ -104,7 +104,7 @@ namespace EFCorePractice.Tests
             // Act
             var author = new Author { FirstName = "William", LastName = "Shakespeare" };
             var publisher = new Publisher { Name = "ABC Press" };
-            var book = new Book { Title = "Adventures of Huckleberry Finn", Author = author, Publisher = publisher };
+            var book = new Book { Title = "Adventures of Huckleberry Finn", Isbn = "1234", Author = author, Publisher = publisher };
             context.AddRange(author, publisher, book);
             await context.SaveChangesAsync();
 
@@ -169,7 +169,7 @@ namespace EFCorePractice.Tests
                 FirstName = "William",
                 LastName = "Shakespeare",
                 Books = new[] {
-                    new Book { Title = "Othello", Publisher = publisher }
+                    new Book { Title = "Othello", Isbn = "1234", Publisher = publisher }
                 }
             };
             context.Add(author);
@@ -183,7 +183,7 @@ namespace EFCorePractice.Tests
                 FirstName = "Bill",
                 LastName = "Shake",
                 Books = new[] {
-                    new Book { Title = "Hamlet", Publisher = publisher }
+                    new Book { Title = "Hamlet", Isbn = "2345", Publisher = publisher }
                 }
             };
             // update or insert, new Book is inserted too
@@ -283,9 +283,9 @@ namespace EFCorePractice.Tests
                 FirstName = "William",
                 LastName = "Shakespeare",
                 Books = new List<Book> {
-                    new Book{ Title = "Hamlet", Publisher = publisher },
-                    new Book{ Title = "Othello", Publisher = publisher },
-                    new Book{ Title = "MacBeth", Publisher = publisher  }
+                    new Book{ Title = "Hamlet", Isbn="1234", Publisher = publisher },
+                    new Book{ Title = "Othello", Isbn="2345", Publisher = publisher },
+                    new Book{ Title = "MacBeth", Isbn="3456", Publisher = publisher  }
                 }
             };
             context.Add(author);
@@ -300,7 +300,7 @@ namespace EFCorePractice.Tests
                 LastName = "Shakespeare"
             };
 
-            foreach (var bb in author.Books.Select(b => new Book { Id = b.Id, Isbn = "1234" + b.Id }))
+            foreach (var bb in author.Books.Select(b => new Book { Id = b.Id, Title = b.Title + " v2" }))
                 updatedAuthor.Books.Add(bb);
 
             // ensures that all entities are tracked in the UnChanged state, and then indicates that the Isbn property is modified. 
@@ -309,7 +309,7 @@ namespace EFCorePractice.Tests
                 e.Entry.State = EntityState.Unchanged; //starts tracking
                 if ((e.Entry.Entity as Book) != null)
                 {
-                    context.Entry(e.Entry.Entity as Book).Property("Isbn").IsModified = true;
+                    context.Entry(e.Entry.Entity as Book).Property(b => b.Title).IsModified = true;
                 }
             });
             await context.SaveChangesAsync();
@@ -320,7 +320,7 @@ namespace EFCorePractice.Tests
             Assert.Equal("William", saved.FirstName);
             Assert.Equal("Shakespeare", saved.LastName);
             Assert.Equal(updatedAuthor.Books.Count(), saved.Books.Count());
-            Assert.True(saved.Books.All(b => !string.IsNullOrWhiteSpace(b.Isbn)));
+            Assert.True(saved.Books.All(b => b.Title.EndsWith("v2")));
             Assert.True(saved.Books.All(b => b.Publisher.Id == publisher.Id));
         }
 
@@ -336,7 +336,7 @@ namespace EFCorePractice.Tests
             await context.SaveChangesAsync();
 
             // Act
-            var book = new Book { Title = "Romeo and Juliet" };
+            var book = new Book { Title = "Romeo and Juliet", Isbn = "1234", };
             book.Author = context.Authors.Single(a => a.Id == author.Id); //  Author Unchanged
             book.Publisher = context.Publishers.Single(a => a.Id == publisher.Id); // Publisher Unchanged
             book.Author.FirstName = "Bill"; // Author Modified
@@ -357,7 +357,7 @@ namespace EFCorePractice.Tests
         {
             // Arrange
             var context = await dbFixture.CreateContextAsync();
-            var book = new Book { Title = "Romeo and Juliet", Author = new Author { FirstName = "William", LastName = "Shakespeare" }, Publisher = new Publisher { Name = "ABC Press" } };
+            var book = new Book { Title = "Romeo and Juliet", Isbn = "1234", Author = new Author { FirstName = "William", LastName = "Shakespeare" }, Publisher = new Publisher { Name = "ABC Press" } };
             context.Add(book);
             await context.SaveChangesAsync();
             context.ChangeTracker.Clear();
@@ -388,14 +388,14 @@ namespace EFCorePractice.Tests
         {
             // Arrange
             var context = await dbFixture.CreateContextAsync();
-            var book = new Book { Title = "Romeo and Juliet", Author = new Author { FirstName = "William", LastName = "Shakespeare" }, Publisher = new Publisher { Name = "ABC Press" } };
+            var book = new Book { Title = "Romeo and Juliet", Isbn = "1234", Author = new Author { FirstName = "William", LastName = "Shakespeare" }, Publisher = new Publisher { Name = "ABC Press" } };
             var author = new Author { FirstName = "Bill", LastName = "Shakespeare" };
             context.AddRange(book, author);
             await context.SaveChangesAsync();
             context.ChangeTracker.Clear();
 
             // Act
-            var newBook = new Book { Title = "The Winters Tale", AuthorId = author.Id, PublisherId = book.Publisher.Id };
+            var newBook = new Book { Title = "The Winters Tale", Isbn = "2345", AuthorId = author.Id, PublisherId = book.Publisher.Id };
             context.Add(newBook);
             await context.SaveChangesAsync();
 
@@ -424,9 +424,9 @@ namespace EFCorePractice.Tests
                 FirstName = "William",
                 LastName = "Shakespeare",
                 Books = new List<Book> {
-                    new Book{ Title = "Hamlet", Publisher = publisher },
-                    new Book{ Title = "Othello", Publisher = publisher },
-                    new Book{ Title = "MacBeth", Publisher = publisher }
+                    new Book{ Title = "Hamlet", Isbn = "1234", Publisher = publisher },
+                    new Book{ Title = "Othello", Isbn = "2345", Publisher = publisher },
+                    new Book{ Title = "MacBeth", Isbn = "3456", Publisher = publisher }
                 }
             };
             context.Add(author);
@@ -453,9 +453,9 @@ namespace EFCorePractice.Tests
                 FirstName = "William",
                 LastName = "Shakespeare",
                 Books = new List<Book> {
-                    new Book{ Title = "Hamlet", Publisher = publisher },
-                    new Book{ Title = "Othello", Publisher = publisher },
-                    new Book{ Title = "MacBeth", Publisher = publisher }
+                    new Book{ Title = "Hamlet", Isbn = "1234", Publisher = publisher },
+                    new Book{ Title = "Othello", Isbn = "2345", Publisher = publisher },
+                    new Book{ Title = "MacBeth", Isbn = "3456", Publisher = publisher }
                 }
             };
             context.Add(author);
@@ -484,9 +484,9 @@ namespace EFCorePractice.Tests
                 FirstName = "William",
                 LastName = "Shakespeare",
                 Books = new List<Book> {
-                    new Book{ Title = "Hamlet", Publisher = publisher },
-                    new Book{ Title = "Othello", Publisher = publisher },
-                    new Book{ Title = "MacBeth", Publisher = publisher }
+                    new Book{ Title = "Hamlet", Isbn = "1234", Publisher = publisher },
+                    new Book{ Title = "Othello", Isbn = "2345", Publisher = publisher },
+                    new Book{ Title = "MacBeth", Isbn = "3456", Publisher = publisher }
                 }
             };
             context.Add(author);
@@ -518,9 +518,9 @@ namespace EFCorePractice.Tests
                 FirstName = "William",
                 LastName = "Shakespeare",
                 Books = new List<Book> {
-                    new Book{ Title = "Hamlet", Publisher = publisher },
-                    new Book{ Title = "Othello", Publisher = publisher },
-                    new Book{ Title = "MacBeth", Publisher = publisher }
+                    new Book{ Title = "Hamlet", Isbn = "1234", Publisher = publisher },
+                    new Book{ Title = "Othello", Isbn = "2345", Publisher = publisher },
+                    new Book{ Title = "MacBeth", Isbn = "3456", Publisher = publisher }
                 }
             };
             context.Add(author);
