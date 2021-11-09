@@ -41,12 +41,20 @@ namespace EFCorePractice.Tests
                 Months = 12,
                 StartDate = DateTime.UtcNow.Date
             };
-            context.AddRange(mobileContract, broadbandContract);
+            var tvContract = new TvContract
+            {
+                PackageType = PackageType.M,
+                Charge = 1.05M,
+                Months = 12,
+                StartDate = DateTime.UtcNow.Date
+            };
+            context.AddRange(mobileContract, broadbandContract, tvContract);
             await context.SaveChangesAsync();
 
             // Assert
-            Assert.Equal(1, context.Entry(mobileContract).Property("ContractType").CurrentValue);
-            Assert.Equal(2, context.Entry(broadbandContract).Property("ContractType").CurrentValue);
+            Assert.Equal("Mobile", context.Entry(mobileContract).Property("ContractType").CurrentValue);
+            Assert.Equal("Broadband", context.Entry(broadbandContract).Property("ContractType").CurrentValue);
+            Assert.Equal("Tv", context.Entry(tvContract).Property("ContractType").CurrentValue);
         }
     }
 }

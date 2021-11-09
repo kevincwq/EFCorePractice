@@ -32,6 +32,8 @@ namespace EFCorePractice
 
         public DbSet<BroadbandContract> BroadbandContracts { get; set; }
 
+        public DbSet<TvContract> TvContracts { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.ApplyConfigurationsFromAssembly(GetType().Assembly);

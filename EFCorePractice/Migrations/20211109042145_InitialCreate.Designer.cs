@@ -6,17 +6,18 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
+#nullable disable
+
 namespace EFCorePractice.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20211107221631_AddModelAttributes")]
-    partial class AddModelAttributes
+    [Migration("20211109042145_InitialCreate")]
+    partial class InitialCreate
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder
-                .HasAnnotation("ProductVersion", "5.0.11");
+            modelBuilder.HasAnnotation("ProductVersion", "6.0.0");
 
             modelBuilder.Entity("BookCategory", b =>
                 {
@@ -40,22 +41,30 @@ namespace EFCorePractice.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("City")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Country")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<DateTimeOffset>("CreatedUtc")
                         .HasColumnType("TEXT");
 
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("BLOB");
+
                     b.Property<string>("StateOrProvince")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Street")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<DateTimeOffset>("UpdatedUtc")
-                        .IsConcurrencyToken()
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
@@ -83,8 +92,12 @@ namespace EFCorePractice.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTimeOffset>("UpdatedUtc")
+                    b.Property<byte[]>("RowVersion")
                         .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("BLOB");
+
+                    b.Property<DateTimeOffset>("UpdatedUtc")
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
@@ -104,6 +117,7 @@ namespace EFCorePractice.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Biography")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<DateTimeOffset>("CreatedUtc")
@@ -118,8 +132,12 @@ namespace EFCorePractice.Migrations
                     b.Property<string>("PlaceOfBirth")
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTimeOffset>("UpdatedUtc")
+                    b.Property<byte[]>("RowVersion")
                         .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("BLOB");
+
+                    b.Property<DateTimeOffset>("UpdatedUtc")
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
@@ -143,24 +161,34 @@ namespace EFCorePractice.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Isbn")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<long>("PublisherId")
                         .HasColumnType("INTEGER");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("BLOB");
 
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<DateTimeOffset>("UpdatedUtc")
-                        .IsConcurrencyToken()
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 
                     b.HasIndex("AuthorId");
 
+                    b.HasIndex("Isbn")
+                        .IsUnique();
+
                     b.HasIndex("PublisherId");
+
+                    b.HasIndex("Title");
 
                     b.ToTable("Books");
                 });
@@ -171,18 +199,24 @@ namespace EFCorePractice.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("CategoryName")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
                     b.Property<DateTimeOffset>("CreatedUtc")
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTimeOffset>("UpdatedUtc")
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<byte[]>("RowVersion")
                         .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("BLOB");
+
+                    b.Property<DateTimeOffset>("UpdatedUtc")
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
+
+                    b.HasAlternateKey("Name");
 
                     b.ToTable("Categories");
                 });
@@ -214,20 +248,63 @@ namespace EFCorePractice.Migrations
                     b.Property<DateTime>("LastUpdated")
                         .HasColumnType("TEXT");
 
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("BLOB");
+
                     b.Property<long?>("UpdatedById")
                         .HasColumnType("INTEGER");
 
                     b.Property<DateTimeOffset>("UpdatedUtc")
-                        .IsConcurrencyToken()
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
+
+                    b.HasAlternateKey("Email");
 
                     b.HasIndex("CreatedById");
 
                     b.HasIndex("UpdatedById");
 
                     b.ToTable("Contacts");
+                });
+
+            modelBuilder.Entity("EFCorePractice.Contract", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<decimal>("Charge")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ContractType")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTimeOffset>("CreatedUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Months")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("BLOB");
+
+                    b.Property<DateTime>("StartDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTimeOffset>("UpdatedUtc")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Contracts", (string)null);
+
+                    b.HasDiscriminator<string>("ContractType").HasValue("Contract");
                 });
 
             modelBuilder.Entity("EFCorePractice.Publisher", b =>
@@ -246,11 +323,17 @@ namespace EFCorePractice.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTimeOffset>("UpdatedUtc")
+                    b.Property<byte[]>("RowVersion")
                         .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("BLOB");
+
+                    b.Property<DateTimeOffset>("UpdatedUtc")
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
+
+                    b.HasAlternateKey("Name");
 
                     b.HasIndex("AddressId");
 
@@ -266,8 +349,12 @@ namespace EFCorePractice.Migrations
                     b.Property<DateTimeOffset>("CreatedUtc")
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTimeOffset>("UpdatedUtc")
+                    b.Property<byte[]>("RowVersion")
                         .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("BLOB");
+
+                    b.Property<DateTimeOffset>("UpdatedUtc")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("UserName")
@@ -276,7 +363,39 @@ namespace EFCorePractice.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasAlternateKey("UserName");
+
                     b.ToTable("User");
+                });
+
+            modelBuilder.Entity("EFCorePractice.BroadbandContract", b =>
+                {
+                    b.HasBaseType("EFCorePractice.Contract");
+
+                    b.Property<int>("DownloadSpeed")
+                        .HasColumnType("INTEGER");
+
+                    b.HasDiscriminator().HasValue("Broadband");
+                });
+
+            modelBuilder.Entity("EFCorePractice.MobileContract", b =>
+                {
+                    b.HasBaseType("EFCorePractice.Contract");
+
+                    b.Property<string>("MobileNumber")
+                        .HasColumnType("TEXT");
+
+                    b.HasDiscriminator().HasValue("Mobile");
+                });
+
+            modelBuilder.Entity("EFCorePractice.TvContract", b =>
+                {
+                    b.HasBaseType("EFCorePractice.Contract");
+
+                    b.Property<int>("PackageType")
+                        .HasColumnType("INTEGER");
+
+                    b.HasDiscriminator().HasValue("Tv");
                 });
 
             modelBuilder.Entity("BookCategory", b =>

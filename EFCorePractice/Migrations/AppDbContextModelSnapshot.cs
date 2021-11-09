@@ -5,6 +5,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
+#nullable disable
+
 namespace EFCorePractice.Migrations
 {
     [DbContext(typeof(AppDbContext))]
@@ -13,8 +15,7 @@ namespace EFCorePractice.Migrations
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder
-                .HasAnnotation("ProductVersion", "5.0.11");
+            modelBuilder.HasAnnotation("ProductVersion", "6.0.0");
 
             modelBuilder.Entity("BookCategory", b =>
                 {
@@ -276,8 +277,9 @@ namespace EFCorePractice.Migrations
                     b.Property<decimal>("Charge")
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("ContractType")
-                        .HasColumnType("INTEGER");
+                    b.Property<string>("ContractType")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
 
                     b.Property<DateTimeOffset>("CreatedUtc")
                         .HasColumnType("TEXT");
@@ -298,9 +300,9 @@ namespace EFCorePractice.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Contracts");
+                    b.ToTable("Contracts", (string)null);
 
-                    b.HasDiscriminator<int>("ContractType");
+                    b.HasDiscriminator<string>("ContractType").HasValue("Contract");
                 });
 
             modelBuilder.Entity("EFCorePractice.Publisher", b =>
@@ -371,7 +373,7 @@ namespace EFCorePractice.Migrations
                     b.Property<int>("DownloadSpeed")
                         .HasColumnType("INTEGER");
 
-                    b.HasDiscriminator().HasValue(2);
+                    b.HasDiscriminator().HasValue("Broadband");
                 });
 
             modelBuilder.Entity("EFCorePractice.MobileContract", b =>
@@ -381,7 +383,17 @@ namespace EFCorePractice.Migrations
                     b.Property<string>("MobileNumber")
                         .HasColumnType("TEXT");
 
-                    b.HasDiscriminator().HasValue(1);
+                    b.HasDiscriminator().HasValue("Mobile");
+                });
+
+            modelBuilder.Entity("EFCorePractice.TvContract", b =>
+                {
+                    b.HasBaseType("EFCorePractice.Contract");
+
+                    b.Property<int>("PackageType")
+                        .HasColumnType("INTEGER");
+
+                    b.HasDiscriminator().HasValue("Tv");
                 });
 
             modelBuilder.Entity("BookCategory", b =>

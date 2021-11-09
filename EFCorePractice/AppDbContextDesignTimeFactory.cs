@@ -5,6 +5,7 @@ namespace EFCorePractice
 {
     public class AppDbContextDesignTimeFactory : IDesignTimeDbContextFactory<AppDbContext>
     {
+        const string DbConnection = "Data Source=Application.db;Cache=Shared";
         /// <summary>
         /// Supply the connection string as the first arg:
         ///  
@@ -32,8 +33,9 @@ namespace EFCorePractice
         /// </summary>
         public AppDbContext CreateDbContext(string[] args)
         {
+            var connection = args.Length > 0 ? args[0] : DbConnection;
             var optionsBuilder = new DbContextOptionsBuilder<AppDbContext>();
-            optionsBuilder.UseSqlite(args[0], a => a.MigrationsAssembly(GetType().Assembly.FullName));
+            optionsBuilder.UseSqlite(connection, a => a.MigrationsAssembly(GetType().Assembly.FullName));
             return new AppDbContext(optionsBuilder.Options);
         }
     }

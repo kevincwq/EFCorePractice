@@ -266,6 +266,8 @@ namespace EFCorePractice
         public DateTime StartDate { get; set; }
         public int Months { get; set; }
         public decimal Charge { get; set; }
+
+        public string ContractType { get; set; }
     }
 
     public class MobileContract : Contract
@@ -278,15 +280,33 @@ namespace EFCorePractice
         public int DownloadSpeed { get; set; }
     }
 
+    public class TvContract : Contract
+    {
+        public PackageType PackageType { get; set; }
+    }
+
+    public enum PackageType
+    {
+        S, M, L, XL
+    }
+
     public class ContractConfiguration : BaseEntityTypeConfiguration<Contract>
     {
         public override void Configure(EntityTypeBuilder<Contract> entityTypeBuilder)
         {
-            // configure discriminator values for entities in an inheritance hierarchy when a table per hierarchy approach is chosen for mapping inheritance to a database.
+            // https://docs.microsoft.com/en-us/ef/core/modeling/inheritance
+
+            // TPC: A separate table is used to represent each concrete type in the inheritance chain.
+
+            // TPT: A separate table is used to represent each type in the inheritance chain, including abstract types. Tables that represent derived types are related to their base type via foreign keys.
+
+            // TPH: One table is used to represent all classes in the hierarchy. A "discriminator" column is used to discriminate between differing types. The table takes the name of the base class or its associated DbSet property by default.
             entityTypeBuilder.ToTable("Contracts")
-            .HasDiscriminator<int>("ContractType")
-            .HasValue<MobileContract>(1)
-            .HasValue<BroadbandContract>(2);
+            .HasDiscriminator(c => c.ContractType)
+            .HasValue<TvContract>("Tv")
+            .HasValue<MobileContract>("Mobile")
+            .HasValue<BroadbandContract>("Broadband");
+
             base.Configure(entityTypeBuilder);
         }
     }
