@@ -294,6 +294,7 @@ namespace EFCorePractice
     {
         public override void Configure(EntityTypeBuilder<Contract> entityTypeBuilder)
         {
+            // https://www.learnentityframeworkcore.com/inheritance/table-per-hierarchy
             // https://docs.microsoft.com/en-us/ef/core/modeling/inheritance
 
             // TPC: A separate table is used to represent each concrete type in the inheritance chain.

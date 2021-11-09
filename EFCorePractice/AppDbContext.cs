@@ -28,6 +28,8 @@ namespace EFCorePractice
 
         public DbSet<Category> Categories { get; set; }
 
+        // public DbSet<Contract> Contracts { get; set; }
+
         public DbSet<MobileContract> MobileContracts { get; set; }
 
         public DbSet<BroadbandContract> BroadbandContracts { get; set; }
