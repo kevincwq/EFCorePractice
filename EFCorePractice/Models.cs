@@ -11,16 +11,23 @@ namespace EFCorePractice
         public DateTimeOffset CreatedUtc { get; set; }
 
         public DateTimeOffset UpdatedUtc { get; set; }
-
-        // [Timestamp]
-        public byte[] RowVersion { get; set; }
     }
 
     public abstract class BaseEntityTypeConfiguration<TBase> : IEntityTypeConfiguration<TBase> where TBase : BaseEntity
     {
         public virtual void Configure(EntityTypeBuilder<TBase> entityTypeBuilder)
         {
-            entityTypeBuilder.Property(p => p.RowVersion).IsRowVersion();
+            // Optimistic concurrency control
+            // SQL Server uses a rowversion column.
+            // Unfortunately, SQLite has no such feature. So we implement similar functionality using a trigger.
+            //CREATE TRIGGER UpdateXXXXVersion
+            //AFTER UPDATE ON XXXXX
+            //BEGIN
+            //    UPDATE XXXXX
+            //    SET Version = Version + 1
+            //    WHERE rowid = NEW.rowid;
+            //END;
+            entityTypeBuilder.Property<byte[]>("RowVersion").IsRowVersion();
         }
     }
 
