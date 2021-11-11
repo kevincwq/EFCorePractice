@@ -9,6 +9,15 @@ namespace EFCorePractice.Migrations
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            if (ActiveProvider == "Microsoft.EntityFrameworkCore.SqlServer")
+            {
+                // do something SQL Server - specific
+            }
+            if (ActiveProvider == "Microsoft.EntityFrameworkCore.Sqlite")
+            {
+                // do something SqLite - specific
+            }
+
             migrationBuilder.CreateTable(
                 name: "Addresses",
                 columns: table => new

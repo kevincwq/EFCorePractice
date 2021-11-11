@@ -70,6 +70,14 @@ namespace EFCorePractice
             entityTypeBuilder.Property(b => b.FirstName).IsRequired();
             entityTypeBuilder.Property(b => b.LastName).IsRequired();
             entityTypeBuilder.Ignore(b => b.FullName);
+
+            // Seeding data
+            //entityTypeBuilder.HasData(new Author
+            //{
+            //    Id = 1,
+            //    FirstName = "William",
+            //    LastName = "Shakespeare"
+            //});
             base.Configure(entityTypeBuilder);
         }
     }
