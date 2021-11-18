@@ -43,6 +43,30 @@ namespace EFCorePractice.Tests
         }
 
         [Fact]
+        public async Task Add_SimpleRecord_WithKey()
+        {
+            // Arrange
+            var context = await dbFixture.CreateContextAsync();
+
+            // Act
+            // with type parameter
+            var author1 = new Author { Id = 5000, FirstName = "William", LastName = "Shakespeare" };
+            context.Add<Author>(author1);
+            await context.SaveChangesAsync();
+
+            // without type parameter
+            var author2 = new Author { Id = 5001, FirstName = "William", LastName = "Shakespeare" };
+            context.Add(author2);
+            await context.SaveChangesAsync();
+
+            // Assert
+            context.ChangeTracker.Clear();
+            var authors = context.Authors.ToArray();
+            Assert.Equal(2, authors.Length);
+            Assert.True(authors.All(a => a.Id >= 5000));
+        }
+
+        [Fact]
         public async Task Add_Relationship_OneToMany()
         {
             // Arrange
