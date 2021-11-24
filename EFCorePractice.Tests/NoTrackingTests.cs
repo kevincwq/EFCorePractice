@@ -9,15 +9,11 @@ using Xunit.Abstractions;
 
 namespace EFCorePractice.Tests
 {
-    public class NoTrackingTests : IClassFixture<DbContextFixture>
+    public class NoTrackingTests : TestBase
     {
-        DbContextFixture dbFixture;
-        private readonly ITestOutputHelper output;
-
         public NoTrackingTests(ITestOutputHelper output, DbContextFixture fixture)
+            : base(output, fixture)
         {
-            this.output = output;
-            this.dbFixture = fixture;
         }
 
         [Fact]
@@ -25,13 +21,13 @@ namespace EFCorePractice.Tests
         {
             // Arrange
             var context = await dbFixture.CreateContextAsync();
-            var publisher = new Publisher { Name = "ABC Press", Address = new Address { Street = "12 Yonghegong St", City = "Dongcheng", StateOrProvince = "Beijing", Country = "China", } };
+            var publisher = new Publisher { Name = "ABC Press" + DbContextFixture.NewUniqueIndex, Address = new Address { Street = "12 Yonghegong St", City = "Dongcheng", StateOrProvince = "Beijing", Country = "China", } };
             var author = new Author
             {
                 FirstName = "William",
                 LastName = "Shakespeare",
                 Books = new[] {
-                    new Book { Title = "Adventures 1", Isbn = "1234", Publisher = publisher },
+                    new Book { Title = "Adventures 1", Isbn = "ISBN:" + DbContextFixture.NewUniqueIndex, Publisher = publisher },
                     new Book { Title = "Adventures 2", Isbn = "5678", Publisher = publisher }
                 },
                 Address = new Address { Street = "Cromwell Rd", City = "South Kensington", StateOrProvince = "London SW7 5BD", Country = "United Kingdom" },
@@ -57,14 +53,14 @@ namespace EFCorePractice.Tests
         {
             // Arrange
             var context = await dbFixture.CreateContextAsync();
-            var publisher = new Publisher { Name = "ABC Press", Address = new Address { Street = "12 Yonghegong St", City = "Dongcheng", StateOrProvince = "Beijing", Country = "China", } };
+            var publisher = new Publisher { Name = "ABC Press" + DbContextFixture.NewUniqueIndex, Address = new Address { Street = "12 Yonghegong St", City = "Dongcheng", StateOrProvince = "Beijing", Country = "China", } };
             var author = new Author
             {
-                FirstName = "William",
-                LastName = "Shakespeare",
+                FirstName = "William" + DbContextFixture.NewUniqueIndex,
+                LastName = "Shakespeare" + DbContextFixture.NewUniqueIndex,
                 Books = new[] {
-                    new Book { Title = "Adventures 1", Isbn = "1234", Publisher = publisher },
-                    new Book { Title = "Adventures 2", Isbn = "5678", Publisher = publisher }
+                    new Book { Title = "Adventures 1", Isbn = "ISBN:" + DbContextFixture.NewUniqueIndex, Publisher = publisher },
+                    new Book { Title = "Adventures 2", Isbn = "ISBN:" + DbContextFixture.NewUniqueIndex, Publisher = publisher }
                 },
                 Address = new Address { Street = "Cromwell Rd", City = "South Kensington", StateOrProvince = "London SW7 5BD", Country = "United Kingdom" },
                 Biography = new AuthorBiography { Biography = "Something cool", DateOfBirth = new DateTime(1920, 1, 2), PlaceOfBirth = "Unknown", Nationality = "Q" }
@@ -76,8 +72,8 @@ namespace EFCorePractice.Tests
             // Act
             context.ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
 
-            var saved = context.Authors.Where(a => a.FirstName == "William").Single();
-            saved = context.Authors.Where(a => a.LastName == "Shakespeare").Single();
+            var saved = context.Authors.Where(a => a.FirstName == author.FirstName).Single();
+            saved = context.Authors.Where(a => a.LastName == author.LastName).Single();
 
             // Assert
             Assert.Equal(author.FirstName, saved.FirstName);

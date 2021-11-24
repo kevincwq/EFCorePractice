@@ -9,15 +9,11 @@ using Xunit.Abstractions;
 
 namespace EFCorePractice.Tests
 {
-    public class IncludeTests : IClassFixture<DbContextFixture>
+    public class IncludeTests : TestBase
     {
-        DbContextFixture dbFixture;
-        private readonly ITestOutputHelper output;
-
         public IncludeTests(ITestOutputHelper output, DbContextFixture fixture)
+            : base(output, fixture)
         {
-            this.output = output;
-            this.dbFixture = fixture;
         }
 
         [Fact]
@@ -25,16 +21,16 @@ namespace EFCorePractice.Tests
         {
             // Arrange
             var context = await dbFixture.CreateContextAsync();
-            var publisher = new Publisher { Name = "ABC Press", Address = new Address { Street = "12 Yonghegong St", City = "Dongcheng", StateOrProvince = "Beijing", Country = "China", } };
+            var publisher = new Publisher { Name = "ABC Press" + DbContextFixture.NewUniqueIndex, Address = new Address { Street = "12 Yonghegong St", City = "Dongcheng", StateOrProvince = "Beijing", Country = "China", } };
             var author = new Author
             {
                 FirstName = "William",
                 LastName = "Shakespeare",
                 Books = new[] {
-                    new Book { Title = "Adventures 1", Isbn = "1234", Publisher = publisher },
-                    new Book { Title = "Adventures 2", Isbn = "5678", Publisher = publisher }
+                    new Book { Title = "Adventures 1", Isbn = "ISBN:" + DbContextFixture.NewUniqueIndex, Publisher = publisher },
+                    new Book { Title = "Adventures 2", Isbn = "ISBN:" + DbContextFixture.NewUniqueIndex, Publisher = publisher }
                 },
-                Address = new Address { Street= "Cromwell Rd", City = "South Kensington", StateOrProvince = "London SW7 5BD", Country = "United Kingdom" },
+                Address = new Address { Street = "Cromwell Rd", City = "South Kensington", StateOrProvince = "London SW7 5BD", Country = "United Kingdom" },
                 Biography = new AuthorBiography { Biography = "Something cool", DateOfBirth = new DateTime(1920, 1, 2), PlaceOfBirth = "Unknown", Nationality = "Q" }
             };
 
@@ -42,7 +38,7 @@ namespace EFCorePractice.Tests
             await context.SaveChangesAsync();
 
             // Act
-            var query = context.Authors.Where(a => a.FirstName == "William").Include(a => a.Books).ThenInclude(b => b.Publisher).ThenInclude(p => p.Address).Include(a => a.Address).Include(a => a.Biography);
+            var query = context.Authors.AsNoTracking().Where(a => a.Id == author.Id).Include(a => a.Books).ThenInclude(b => b.Publisher).ThenInclude(p => p.Address).Include(a => a.Address).Include(a => a.Biography);
             output.WriteLine($"SQL: {query.ToQueryString()}");
             var saved = query.Single();
 
@@ -60,14 +56,14 @@ namespace EFCorePractice.Tests
         {
             // Arrange
             var context = await dbFixture.CreateContextAsync();
-            var publisher = new Publisher { Name = "ABC Press", Address = new Address { Street = "12 Yonghegong St", City = "Dongcheng", StateOrProvince = "Beijing", Country = "China", } };
+            var publisher = new Publisher { Name = "ABC Press" + DbContextFixture.NewUniqueIndex, Address = new Address { Street = "12 Yonghegong St", City = "Dongcheng", StateOrProvince = "Beijing", Country = "China", } };
             var author = new Author
             {
                 FirstName = "William",
                 LastName = "Shakespeare",
                 Books = new[] {
-                    new Book { Title = "Adventures 1", Isbn = "1234", Publisher = publisher },
-                    new Book { Title = "Adventures 2", Isbn = "5678", Publisher = publisher }
+                    new Book { Title = "Adventures 1", Isbn = "ISBN:" + DbContextFixture.NewUniqueIndex, Publisher = publisher },
+                    new Book { Title = "Adventures 2", Isbn = "ISBN:" + DbContextFixture.NewUniqueIndex, Publisher = publisher }
                 },
                 Address = new Address { Street = "Cromwell Rd", City = "South Kensington", StateOrProvince = "London SW7 5BD", Country = "United Kingdom" },
                 Biography = new AuthorBiography { Biography = "Something cool", DateOfBirth = new DateTime(1920, 1, 2), PlaceOfBirth = "Unknown", Nationality = "Q" }

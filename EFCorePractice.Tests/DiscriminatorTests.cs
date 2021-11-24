@@ -9,15 +9,11 @@ using Xunit.Abstractions;
 
 namespace EFCorePractice.Tests
 {
-    public class DiscriminatorTests : IClassFixture<DbContextFixture>
+    public class DiscriminatorTests : TestBase
     {
-        DbContextFixture dbFixture;
-        private readonly ITestOutputHelper output;
-
         public DiscriminatorTests(ITestOutputHelper output, DbContextFixture fixture)
+            : base(output, fixture)
         {
-            this.output = output;
-            this.dbFixture = fixture;
         }
 
         [Fact]

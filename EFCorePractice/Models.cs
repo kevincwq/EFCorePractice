@@ -11,6 +11,8 @@ namespace EFCorePractice
         public DateTimeOffset CreatedUtc { get; set; }
 
         public DateTimeOffset UpdatedUtc { get; set; }
+
+        public byte[] RowVersion { get; set; }
     }
 
     public abstract class BaseEntityTypeConfiguration<TBase> : IEntityTypeConfiguration<TBase> where TBase : BaseEntity

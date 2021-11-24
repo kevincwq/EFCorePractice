@@ -9,15 +9,11 @@ using Xunit.Abstractions;
 
 namespace EFCorePractice.Tests
 {
-    public class ShadowPropertyTests : IClassFixture<DbContextFixture>
+    public class ShadowPropertyTests : TestBase
     {
-        DbContextFixture dbFixture;
-        private readonly ITestOutputHelper output;
-
         public ShadowPropertyTests(ITestOutputHelper output, DbContextFixture fixture)
+            : base(output, fixture)
         {
-            this.output = output;
-            this.dbFixture = fixture;
         }
 
         [Fact]

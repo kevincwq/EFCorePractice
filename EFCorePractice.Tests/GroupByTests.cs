@@ -9,15 +9,11 @@ using Xunit.Abstractions;
 
 namespace EFCorePractice.Tests
 {
-    public class GroupByTests : IClassFixture<DbContextFixture>
+    public class GroupByTests : TestBase
     {
-        DbContextFixture dbFixture;
-        private readonly ITestOutputHelper output;
-
         public GroupByTests(ITestOutputHelper output, DbContextFixture fixture)
+            : base(output, fixture)
         {
-            this.output = output;
-            this.dbFixture = fixture;
         }
 
         [Fact]
@@ -25,14 +21,14 @@ namespace EFCorePractice.Tests
         {
             // Arrange
             var context = await dbFixture.CreateContextAsync();
-            var publisher = new Publisher { Name = "ABC Press" };
+            var publisher = new Publisher { Name = "ABC Press" + DbContextFixture.NewUniqueIndex };
             var authors = Enumerable.Range(1, 20).Select(i => new Author
             {
                 FirstName = "William" + i % 5,
                 LastName = "Shakespeare",
                 Books = new[] {
-                    new Book { Title = "Adventures 1", Isbn = "1234_" + i + "_1", Publisher = publisher },
-                    new Book { Title = "Adventures 2", Isbn = "1234_" + i + "_2", Publisher = publisher }
+                    new Book { Title = "Adventures 1", Isbn = "ISBN:" + DbContextFixture.NewUniqueIndex, Publisher = publisher },
+                    new Book { Title = "Adventures 2", Isbn = "ISBN:" + DbContextFixture.NewUniqueIndex, Publisher = publisher }
                 }
             }).ToArray();
 
@@ -52,14 +48,14 @@ namespace EFCorePractice.Tests
         {
             // Arrange
             var context = await dbFixture.CreateContextAsync();
-            var publisher = new Publisher { Name = "ABC Press" };
+            var publisher = new Publisher { Name = "ABC Press" + DbContextFixture.NewUniqueIndex };
             var authors = Enumerable.Range(1, 20).Select(i => new Author
             {
                 FirstName = "William" + i % 5,
                 LastName = "Shakespeare",
                 Books = new[] {
-                    new Book { Title = "Adventures 1", Isbn = "1234_" + i + "_1", Publisher = publisher },
-                    new Book { Title = "Adventures 2", Isbn = "1234_" + i + "_2", Publisher = publisher }
+                    new Book { Title = "Adventures 1", Isbn = "ISBN:" + DbContextFixture.NewUniqueIndex, Publisher = publisher },
+                    new Book { Title = "Adventures 2", Isbn = "ISBN:" + DbContextFixture.NewUniqueIndex, Publisher = publisher }
                 }
             }).ToArray();
 

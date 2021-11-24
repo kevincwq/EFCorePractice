@@ -8,15 +8,11 @@ using Xunit.Abstractions;
 
 namespace EFCorePractice.Tests
 {
-    public class CRUDTests : IClassFixture<DbContextFixture>
+    public class CRUDTests : TestBase
     {
-        DbContextFixture dbFixture;
-        private readonly ITestOutputHelper output;
-
         public CRUDTests(ITestOutputHelper output, DbContextFixture fixture)
+            : base(output, fixture)
         {
-            this.output = output;
-            this.dbFixture = fixture;
         }
 
         #region Create
@@ -39,7 +35,7 @@ namespace EFCorePractice.Tests
             await context.SaveChangesAsync();
 
             // Assert
-            Assert.Equal(2, context.Authors.Count());
+            Assert.Equal(2, context.Authors.AsNoTracking().Count(a => new[] { author1.Id, author2.Id }.Contains(a.Id)));
         }
 
         [Fact]
@@ -49,19 +45,16 @@ namespace EFCorePractice.Tests
             var context = await dbFixture.CreateContextAsync();
 
             // Act
-            // with type parameter
             var author1 = new Author { Id = 5000, FirstName = "William", LastName = "Shakespeare" };
             context.Add<Author>(author1);
-            await context.SaveChangesAsync();
 
-            // without type parameter
             var author2 = new Author { Id = 5001, FirstName = "William", LastName = "Shakespeare" };
             context.Add(author2);
-            await context.SaveChangesAsync();
+
+            await context.SaveChangesWithIdentityInsertAsync<Author>();
 
             // Assert
-            context.ChangeTracker.Clear();
-            var authors = context.Authors.ToArray();
+            var authors = context.Authors.AsNoTracking().Where(a => new[] { author1.Id, author2.Id }.Contains(a.Id)).ToArray();
             Assert.Equal(2, authors.Length);
             Assert.True(authors.All(a => a.Id >= 5000));
         }
@@ -73,16 +66,16 @@ namespace EFCorePractice.Tests
             var context = await dbFixture.CreateContextAsync();
 
             // Act
-            var publisher = new Publisher { Name = "ABC Press" };
+            var publisher = new Publisher { Name = "ABC Press" + DbContextFixture.NewUniqueIndex };
             var author = new Author
             {
                 FirstName = "William",
                 LastName = "Shakespeare",
                 Books = new List<Book>
                 {
-                    new Book { Title = "Hamlet", Isbn = "1234", Publisher = publisher },
-                    new Book { Title = "Othello", Isbn = "2345", Publisher = publisher},
-                    new Book { Title = "MacBeth", Isbn = "3456", Publisher = publisher }
+                    new Book { Title = "Hamlet", Isbn = "ISBN:" + DbContextFixture.NewUniqueIndex, Publisher = publisher },
+                    new Book { Title = "Othello", Isbn = "ISBN:" + DbContextFixture.NewUniqueIndex, Publisher = publisher},
+                    new Book { Title = "MacBeth", Isbn = "ISBN:" + DbContextFixture.NewUniqueIndex, Publisher = publisher }
                 }
             };
             // Tells EF that the entity is new and should be inserted into the database, and so sets the state to Added.
@@ -91,9 +84,9 @@ namespace EFCorePractice.Tests
             await context.SaveChangesAsync();
 
             // Assert
-            Assert.Equal(1, context.Authors.Count());
-            Assert.Equal(1, context.Publishers.Count());
-            Assert.Equal(3, context.Books.Count());
+            Assert.Equal(1, context.Authors.AsNoTracking().Count(a => a.Id == author.Id));
+            Assert.Equal(1, context.Publishers.AsNoTracking().Count(a => a.Id == publisher.Id));
+            Assert.Equal(3, context.Books.AsNoTracking().Count(a => author.Books.Select(b => b.Id).Contains(a.Id)));
         }
 
         [Fact]
@@ -103,20 +96,20 @@ namespace EFCorePractice.Tests
             var context = await dbFixture.CreateContextAsync();
 
             // Act
-            var publisher = new Publisher { Name = "ABC Press" };
+            var publisher = new Publisher { Name = "ABC Press" + DbContextFixture.NewUniqueIndex };
             var author = new Author { FirstName = "Stephen", LastName = "King" };
             var books = new List<Book> {
-                new Book { Title = "It", Isbn = "1234", Author = author, Publisher = publisher },
-                new Book { Title = "Carrie", Isbn = "2345", Author = author, Publisher = publisher },
-                new Book { Title = "Misery", Isbn = "3456", Author = author, Publisher = publisher }
+                new Book { Title = "It", Isbn = "ISBN:" + DbContextFixture.NewUniqueIndex, Author = author, Publisher = publisher },
+                new Book { Title = "Carrie", Isbn = "ISBN:" + DbContextFixture.NewUniqueIndex, Author = author, Publisher = publisher },
+                new Book { Title = "Misery", Isbn = "ISBN:" + DbContextFixture.NewUniqueIndex, Author = author, Publisher = publisher }
             };
             context.AddRange(books);
             await context.SaveChangesAsync();
 
             // Assert
-            Assert.Equal(1, context.Authors.Count());
-            Assert.Equal(1, context.Publishers.Count());
-            Assert.Equal(3, context.Books.Count());
+            Assert.Equal(1, context.Authors.AsNoTracking().Count(a => a.Id == author.Id));
+            Assert.Equal(1, context.Publishers.AsNoTracking().Count(a => a.Id == publisher.Id));
+            Assert.Equal(3, context.Books.AsNoTracking().Count(a => books.Select(b => b.Id).Contains(a.Id)));
         }
 
         [Fact]
@@ -127,14 +120,15 @@ namespace EFCorePractice.Tests
 
             // Act
             var author = new Author { FirstName = "William", LastName = "Shakespeare" };
-            var publisher = new Publisher { Name = "ABC Press" };
-            var book = new Book { Title = "Adventures of Huckleberry Finn", Isbn = "1234", Author = author, Publisher = publisher };
+            var publisher = new Publisher { Name = "ABC Press" + DbContextFixture.NewUniqueIndex };
+            var book = new Book { Title = "Adventures of Huckleberry Finn", Isbn = "ISBN:" + DbContextFixture.NewUniqueIndex, Author = author, Publisher = publisher };
             context.AddRange(author, publisher, book);
             await context.SaveChangesAsync();
 
             // Assert
-            Assert.Equal(1, context.Authors.Count());
-            Assert.Equal(1, context.Books.Count());
+            Assert.NotNull(context.Authors.AsNoTracking().Single(a => a.Id == author.Id));
+            Assert.NotNull(context.Books.AsNoTracking().Single(a => a.Id == book.Id));
+            Assert.NotNull(context.Publishers.AsNoTracking().Single(a => a.Id == publisher.Id));
         }
 
         #endregion
@@ -155,8 +149,7 @@ namespace EFCorePractice.Tests
             await context.SaveChangesAsync();
 
             // Assert
-            context.ChangeTracker.Clear();
-            var saved = await context.Authors.FindAsync(author.Id);
+            var saved = await context.Authors.AsNoTracking().SingleAsync(a => a.Id == author.Id);
             Assert.Equal("Bill", saved.FirstName);
         }
 
@@ -168,16 +161,15 @@ namespace EFCorePractice.Tests
             var author = new Author { FirstName = "William", LastName = "Shakespeare" };
             context.Add(author);
             await context.SaveChangesAsync();
-            context.ChangeTracker.Clear();
+            context.Entry(author).State = EntityState.Detached;
 
             // Act
-            var updatedAuthor = new Author { Id = author.Id, FirstName = "Bill", LastName = "Shake" };
+            var updatedAuthor = new Author { Id = author.Id, FirstName = "Bill", LastName = "Shake", RowVersion = author.RowVersion };
             context.Entry(updatedAuthor).State = EntityState.Modified;
             await context.SaveChangesAsync();
 
             // Assert
-            context.ChangeTracker.Clear();
-            var saved = await context.Authors.FindAsync(author.Id);
+            var saved = await context.Authors.AsNoTracking().SingleAsync(a => a.Id == author.Id);
             Assert.Equal("Bill", saved.FirstName);
             Assert.Equal("Shake", saved.LastName);
         }
@@ -187,13 +179,13 @@ namespace EFCorePractice.Tests
         {
             // Arrange
             var context = await dbFixture.CreateContextAsync();
-            var publisher = new Publisher { Name = "ABC Press" };
+            var publisher = new Publisher { Name = "ABC Press" + DbContextFixture.NewUniqueIndex };
             var author = new Author
             {
                 FirstName = "William",
                 LastName = "Shakespeare",
                 Books = new[] {
-                    new Book { Title = "Othello", Isbn = "1234", Publisher = publisher }
+                    new Book { Title = "Othello", Isbn = "ISBN:" + DbContextFixture.NewUniqueIndex, Publisher = publisher }
                 }
             };
             context.Add(author);
@@ -207,8 +199,9 @@ namespace EFCorePractice.Tests
                 FirstName = "Bill",
                 LastName = "Shake",
                 Books = new[] {
-                    new Book { Title = "Hamlet", Isbn = "2345", Publisher = publisher }
-                }
+                    new Book { Title = "Hamlet", Isbn = "ISBN:" + DbContextFixture.NewUniqueIndex, Publisher = publisher }
+                },
+                RowVersion = author.RowVersion
             };
             // update or insert, new Book is inserted too
             context.Update(updatedAuthor);
@@ -231,11 +224,12 @@ namespace EFCorePractice.Tests
             var author = new Author { FirstName = "William", LastName = "Shakespeare" };
             context.Add(author);
             await context.SaveChangesAsync();
-            context.ChangeTracker.Clear();
+            context.Entry(author).State = EntityState.Detached;
 
             // Act
-            var updatedAuthor = new Author { Id = author.Id, FirstName = "Bill", LastName = "Shake" };
-            updatedAuthor.Books.Add(new Book { Id = 1, Title = "Othello" });
+            var updatedAuthor = author;
+            updatedAuthor.FirstName = "Bill";
+            updatedAuthor.Books.Add(new Book { Title = "Hamlet", Isbn = "ISBN:" + DbContextFixture.NewUniqueIndex, Publisher = new Publisher { Name = "ABC Press" + DbContextFixture.NewUniqueIndex } });
             // start tracking
             context.Attach(updatedAuthor);
             // just update FirstName
@@ -245,8 +239,7 @@ namespace EFCorePractice.Tests
             await context.SaveChangesAsync();
 
             // Assert
-            context.ChangeTracker.Clear();
-            var saved = await context.Authors.Include(a => a.Books).FirstAsync(a => a.Id == author.Id);
+            var saved = await context.Authors.AsNoTracking().Include(a => a.Books).FirstAsync(a => a.Id == author.Id);
             Assert.Equal("Bill", saved.FirstName);
             Assert.Equal("Shakespeare1", saved.LastName);
         }
@@ -259,7 +252,7 @@ namespace EFCorePractice.Tests
             var author = new Author { FirstName = "William", LastName = "Shakespeare" };
             context.Add(author);
             await context.SaveChangesAsync();
-            context.ChangeTracker.Clear();
+            context.Entry(author).State = EntityState.Detached;
 
             // Act
             var updatedAuthor = new Author
@@ -268,8 +261,8 @@ namespace EFCorePractice.Tests
                 FirstName = "William",
                 LastName = "Shakespeare"
             };
-            var publisher = new Publisher { Name = "ABC Press" };
-            updatedAuthor.Books.Add(new Book { AuthorId = updatedAuthor.Id, Title = "Hamlet", Isbn = "1234", Publisher = publisher });
+            var publisher = new Publisher { Name = "ABC Press" + DbContextFixture.NewUniqueIndex };
+            updatedAuthor.Books.Add(new Book { AuthorId = updatedAuthor.Id, Title = "Hamlet", Isbn = "ISBN:" + DbContextFixture.NewUniqueIndex, Publisher = publisher });
             updatedAuthor.Books.Add(new Book { AuthorId = updatedAuthor.Id, Title = "Othello", Isbn = "4321", Publisher = publisher });
             updatedAuthor.Books.Add(new Book { AuthorId = updatedAuthor.Id, Title = "MacBeth", Isbn = "5678", Publisher = publisher });
 
@@ -288,8 +281,7 @@ namespace EFCorePractice.Tests
             await context.SaveChangesAsync();
 
             // Assert
-            context.ChangeTracker.Clear();
-            var saved = await context.Authors.Include(a => a.Books).ThenInclude(b => b.Publisher).FirstAsync(a => a.Id == author.Id);
+            var saved = await context.Authors.AsNoTracking().Include(a => a.Books).ThenInclude(b => b.Publisher).FirstAsync(a => a.Id == author.Id);
             Assert.Equal("William", saved.FirstName);
             Assert.Equal("Shakespeare", saved.LastName);
             Assert.Equal(updatedAuthor.Books.Count(), saved.Books.Count());
@@ -301,7 +293,7 @@ namespace EFCorePractice.Tests
         {
             // Arrange
             var context = await dbFixture.CreateContextAsync();
-            var publisher = new Publisher { Name = "ABC Press" };
+            var publisher = new Publisher { Name = "ABC Press" + DbContextFixture.NewUniqueIndex };
             var author = new Author
             {
                 FirstName = "William",
@@ -321,10 +313,11 @@ namespace EFCorePractice.Tests
             {
                 Id = author.Id,
                 FirstName = "William",
-                LastName = "Shakespeare"
+                LastName = "Shakespeare",
+                RowVersion = author.RowVersion
             };
 
-            foreach (var bb in author.Books.Select(b => new Book { Id = b.Id, Title = b.Title + " v2" }))
+            foreach (var bb in author.Books.Select(b => new Book { Id = b.Id, Title = b.Title + " v2", RowVersion = b.RowVersion }))
                 updatedAuthor.Books.Add(bb);
 
             // ensures that all entities are tracked in the UnChanged state, and then indicates that the Isbn property is modified. 
@@ -339,8 +332,7 @@ namespace EFCorePractice.Tests
             await context.SaveChangesAsync();
 
             // Assert
-            context.ChangeTracker.Clear();
-            var saved = await context.Authors.Include(a => a.Books).ThenInclude(b => b.Publisher).FirstAsync(a => a.Id == author.Id);
+            var saved = await context.Authors.AsNoTracking().Include(a => a.Books).ThenInclude(b => b.Publisher).FirstAsync(a => a.Id == author.Id);
             Assert.Equal("William", saved.FirstName);
             Assert.Equal("Shakespeare", saved.LastName);
             Assert.Equal(updatedAuthor.Books.Count(), saved.Books.Count());
@@ -348,19 +340,18 @@ namespace EFCorePractice.Tests
             Assert.True(saved.Books.All(b => b.Publisher.Id == publisher.Id));
         }
 
-
         [Fact]
         public async Task Update_Relationship_Tracked()
         {
             // Arrange
             var context = await dbFixture.CreateContextAsync();
             var author = new Author { FirstName = "William", LastName = "Shakespeare" };
-            var publisher = new Publisher { Name = "ABC Press" };
+            var publisher = new Publisher { Name = "ABC Press" + DbContextFixture.NewUniqueIndex };
             context.AddRange(author, publisher);
             await context.SaveChangesAsync();
 
             // Act
-            var book = new Book { Title = "Romeo and Juliet", Isbn = "1234", };
+            var book = new Book { Title = "Romeo and Juliet", Isbn = "ISBN:" + DbContextFixture.NewUniqueIndex, };
             book.Author = context.Authors.Single(a => a.Id == author.Id); //  Author Unchanged
             book.Publisher = context.Publishers.Single(a => a.Id == publisher.Id); // Publisher Unchanged
             book.Author.FirstName = "Bill"; // Author Modified
@@ -368,11 +359,10 @@ namespace EFCorePractice.Tests
             await context.SaveChangesAsync();
 
             // Assert
-            context.ChangeTracker.Clear();
-            Assert.Equal(1, context.Authors.Count());
-            Assert.Equal(1, context.Publishers.Count());
-            Assert.Equal(1, context.Books.Count());
-            var saved = context.Authors.Single(a => a.Id == author.Id);
+            Assert.Equal(1, context.Authors.AsNoTracking().Count(a => a.Id == author.Id));
+            Assert.Equal(1, context.Publishers.AsNoTracking().Count(a => a.Id == publisher.Id));
+            Assert.Equal(1, context.Books.AsNoTracking().Count(a => a.Id == book.Id));
+            var saved = context.Authors.AsNoTracking().Single(a => a.Id == author.Id);
             Assert.Equal("Bill", saved.FirstName);
         }
 
@@ -381,13 +371,13 @@ namespace EFCorePractice.Tests
         {
             // Arrange
             var context = await dbFixture.CreateContextAsync();
-            var book = new Book { Title = "Romeo and Juliet", Isbn = "1234", Author = new Author { FirstName = "William", LastName = "Shakespeare" }, Publisher = new Publisher { Name = "ABC Press" } };
+            var book = new Book { Title = "Romeo and Juliet", Isbn = "ISBN:" + DbContextFixture.NewUniqueIndex, Author = new Author { FirstName = "William", LastName = "Shakespeare" }, Publisher = new Publisher { Name = "ABC Press" + DbContextFixture.NewUniqueIndex } };
             context.Add(book);
             await context.SaveChangesAsync();
             context.ChangeTracker.Clear();
 
             // Act
-            var stub = new Book { Id = book.Id };
+            var stub = new Book { Id = book.Id, RowVersion = book.RowVersion };
             context.Attach(stub);
             stub.Author = new Author
             {
@@ -398,13 +388,12 @@ namespace EFCorePractice.Tests
             await context.SaveChangesAsync();
 
             // Assert
-            context.ChangeTracker.Clear();
-            var saved = context.Books.Include(b => b.Author).Include(b => b.Publisher).Single(a => a.Id == book.Id);
+            var saved = context.Books.AsNoTracking().Include(b => b.Author).Include(b => b.Publisher).Single(a => a.Id == book.Id);
             Assert.Equal(stub.Author.Id, saved.Author.Id);
             Assert.Equal(book.Publisher.Id, saved.Publisher.Id);
-            Assert.Equal(2, context.Authors.Count());
-            Assert.Equal(1, context.Publishers.Count());
-            Assert.Equal(1, context.Books.Count());
+            Assert.Equal(2, context.Authors.AsNoTracking().Count(a => new[] { book.Author.Id, stub.Author.Id }.Contains(a.Id)));
+            Assert.Equal(1, context.Publishers.AsNoTracking().Count(a => a.Id == book.Publisher.Id));
+            Assert.Equal(1, context.Books.AsNoTracking().Count(a => a.Id == stub.Id));
         }
 
         [Fact]
@@ -412,25 +401,24 @@ namespace EFCorePractice.Tests
         {
             // Arrange
             var context = await dbFixture.CreateContextAsync();
-            var book = new Book { Title = "Romeo and Juliet", Isbn = "1234", Author = new Author { FirstName = "William", LastName = "Shakespeare" }, Publisher = new Publisher { Name = "ABC Press" } };
+            var book = new Book { Title = "Romeo and Juliet", Isbn = "ISBN:" + DbContextFixture.NewUniqueIndex, Author = new Author { FirstName = "William", LastName = "Shakespeare" }, Publisher = new Publisher { Name = "ABC Press" + DbContextFixture.NewUniqueIndex } };
             var author = new Author { FirstName = "Bill", LastName = "Shakespeare" };
             context.AddRange(book, author);
             await context.SaveChangesAsync();
             context.ChangeTracker.Clear();
 
             // Act
-            var newBook = new Book { Title = "The Winters Tale", Isbn = "2345", AuthorId = author.Id, PublisherId = book.Publisher.Id };
+            var newBook = new Book { Title = "The Winters Tale", Isbn = "ISBN:" + DbContextFixture.NewUniqueIndex, AuthorId = author.Id, PublisherId = book.Publisher.Id };
             context.Add(newBook);
             await context.SaveChangesAsync();
 
             // Assert
-            context.ChangeTracker.Clear();
-            var saved = context.Books.Include(b => b.Author).Include(b => b.Publisher).Single(a => a.Id == newBook.Id);
+            var saved = context.Books.AsNoTracking().Include(b => b.Author).Include(b => b.Publisher).Single(a => a.Id == newBook.Id);
             Assert.Equal(author.FirstName, saved.Author.FirstName);
             Assert.Equal(book.Publisher.Name, saved.Publisher.Name);
-            Assert.Equal(2, context.Authors.Count());
-            Assert.Equal(1, context.Publishers.Count());
-            Assert.Equal(2, context.Books.Count());
+            Assert.Equal(2, context.Authors.AsNoTracking().Count(a => new[] { book.Author.Id, author.Id }.Contains(a.Id)));
+            Assert.Equal(1, context.Publishers.AsNoTracking().Count(a => a.Id == book.Publisher.Id));
+            Assert.Equal(2, context.Books.AsNoTracking().Count(a => new[] { book.Id, newBook.Id }.Contains(a.Id)));
         }
 
         #endregion
@@ -442,15 +430,15 @@ namespace EFCorePractice.Tests
         {
             // Arrange
             var context = await dbFixture.CreateContextAsync();
-            var publisher = new Publisher { Name = "ABC Press" };
+            var publisher = new Publisher { Name = "ABC Press" + DbContextFixture.NewUniqueIndex };
             var author = new Author
             {
                 FirstName = "William",
                 LastName = "Shakespeare",
                 Books = new List<Book> {
-                    new Book{ Title = "Hamlet", Isbn = "1234", Publisher = publisher },
-                    new Book{ Title = "Othello", Isbn = "2345", Publisher = publisher },
-                    new Book{ Title = "MacBeth", Isbn = "3456", Publisher = publisher }
+                    new Book{ Title = "Hamlet", Isbn = "ISBN:" + DbContextFixture.NewUniqueIndex, Publisher = publisher },
+                    new Book{ Title = "Othello", Isbn = "ISBN:" + DbContextFixture.NewUniqueIndex, Publisher = publisher },
+                    new Book{ Title = "MacBeth", Isbn = "ISBN:" + DbContextFixture.NewUniqueIndex, Publisher = publisher }
                 }
             };
             context.Add(author);
@@ -461,9 +449,9 @@ namespace EFCorePractice.Tests
             await context.SaveChangesAsync();
 
             // Assert
-            Assert.Equal(0, context.Authors.Count());
-            Assert.Equal(0, context.Books.Count());
-            Assert.Equal(1, context.Publishers.Count());
+            Assert.Equal(0, context.Authors.AsNoTracking().Count(a => a.Id == author.Id));
+            Assert.Equal(1, context.Publishers.AsNoTracking().Count(a => a.Id == publisher.Id));
+            Assert.Equal(0, context.Books.AsNoTracking().Count(a => author.Books.Select(b => b.Id).Contains(a.Id)));
         }
 
         [Fact]
@@ -471,15 +459,15 @@ namespace EFCorePractice.Tests
         {
             // Arrange
             var context = await dbFixture.CreateContextAsync();
-            var publisher = new Publisher { Name = "ABC Press" };
+            var publisher = new Publisher { Name = "ABC Press" + DbContextFixture.NewUniqueIndex };
             var author = new Author
             {
                 FirstName = "William",
                 LastName = "Shakespeare",
                 Books = new List<Book> {
-                    new Book{ Title = "Hamlet", Isbn = "1234", Publisher = publisher },
-                    new Book{ Title = "Othello", Isbn = "2345", Publisher = publisher },
-                    new Book{ Title = "MacBeth", Isbn = "3456", Publisher = publisher }
+                    new Book{ Title = "Hamlet", Isbn = "ISBN:" + DbContextFixture.NewUniqueIndex, Publisher = publisher },
+                    new Book{ Title = "Othello", Isbn = "ISBN:" + DbContextFixture.NewUniqueIndex, Publisher = publisher },
+                    new Book{ Title = "MacBeth", Isbn = "ISBN:" + DbContextFixture.NewUniqueIndex, Publisher = publisher }
                 }
             };
             context.Add(author);
@@ -487,14 +475,14 @@ namespace EFCorePractice.Tests
             context.ChangeTracker.Clear();
 
             // Act
-            var authorToDel = new Author { Id = author.Id };
+            var authorToDel = await context.Authors.FindAsync(author.Id);
             context.Remove(authorToDel);
             await context.SaveChangesAsync();
 
             // Assert
-            Assert.Equal(0, context.Authors.Count());
-            Assert.Equal(0, context.Books.Count());
-            Assert.Equal(1, context.Publishers.Count());
+            Assert.Equal(0, context.Authors.AsNoTracking().Count(a => a.Id == author.Id));
+            Assert.Equal(1, context.Publishers.AsNoTracking().Count(a => a.Id == publisher.Id));
+            Assert.Equal(0, context.Books.AsNoTracking().Count(a => author.Books.Select(b => b.Id).Contains(a.Id)));
         }
 
         [Fact]
@@ -502,15 +490,15 @@ namespace EFCorePractice.Tests
         {
             // Arrange
             var context = await dbFixture.CreateContextAsync();
-            var publisher = new Publisher { Name = "ABC Press" };
+            var publisher = new Publisher { Name = "ABC Press" + DbContextFixture.NewUniqueIndex };
             var author = new Author
             {
                 FirstName = "William",
                 LastName = "Shakespeare",
                 Books = new List<Book> {
-                    new Book{ Title = "Hamlet", Isbn = "1234", Publisher = publisher },
-                    new Book{ Title = "Othello", Isbn = "2345", Publisher = publisher },
-                    new Book{ Title = "MacBeth", Isbn = "3456", Publisher = publisher }
+                    new Book{ Title = "Hamlet", Isbn = "ISBN:" + DbContextFixture.NewUniqueIndex, Publisher = publisher },
+                    new Book{ Title = "Othello", Isbn = "ISBN:" + DbContextFixture.NewUniqueIndex, Publisher = publisher },
+                    new Book{ Title = "MacBeth", Isbn = "ISBN:" + DbContextFixture.NewUniqueIndex, Publisher = publisher }
                 }
             };
             context.Add(author);
@@ -518,14 +506,14 @@ namespace EFCorePractice.Tests
             context.ChangeTracker.Clear();
 
             // Act
-            var authorToDel = new Author { Id = author.Id };
+            var authorToDel = await context.Authors.FindAsync(author.Id);
             context.Entry(authorToDel).State = EntityState.Deleted;
             await context.SaveChangesAsync();
 
             // Assert
-            Assert.Equal(0, context.Authors.Count());
-            Assert.Equal(0, context.Books.Count());
-            Assert.Equal(1, context.Publishers.Count());
+            Assert.Equal(0, context.Authors.AsNoTracking().Count(a => a.Id == author.Id));
+            Assert.Equal(1, context.Publishers.AsNoTracking().Count(a => a.Id == publisher.Id));
+            Assert.Equal(0, context.Books.AsNoTracking().Count(a => author.Books.Select(b => b.Id).Contains(a.Id)));
         }
 
         [Fact]
@@ -536,15 +524,15 @@ namespace EFCorePractice.Tests
 
             // Arrange
             var context = await dbFixture.CreateContextAsync();
-            var publisher = new Publisher { Name = "ABC Press" };
+            var publisher = new Publisher { Name = "ABC Press" + DbContextFixture.NewUniqueIndex };
             var author = new Author
             {
                 FirstName = "William",
                 LastName = "Shakespeare",
                 Books = new List<Book> {
-                    new Book{ Title = "Hamlet", Isbn = "1234", Publisher = publisher },
-                    new Book{ Title = "Othello", Isbn = "2345", Publisher = publisher },
-                    new Book{ Title = "MacBeth", Isbn = "3456", Publisher = publisher }
+                    new Book{ Title = "Hamlet", Isbn = "ISBN:" + DbContextFixture.NewUniqueIndex, Publisher = publisher },
+                    new Book{ Title = "Othello", Isbn = "ISBN:" + DbContextFixture.NewUniqueIndex, Publisher = publisher },
+                    new Book{ Title = "MacBeth", Isbn = "ISBN:" + DbContextFixture.NewUniqueIndex, Publisher = publisher }
                 }
             };
             context.Add(author);
@@ -557,9 +545,9 @@ namespace EFCorePractice.Tests
             await context.SaveChangesAsync();
 
             // Assert
-            Assert.Equal(0, context.Authors.Count());
-            Assert.Equal(0, context.Books.Count());
-            Assert.Equal(1, context.Publishers.Count());
+            Assert.Equal(0, context.Authors.AsNoTracking().Count(a => a.Id == author.Id));
+            Assert.Equal(1, context.Publishers.AsNoTracking().Count(a => a.Id == publisher.Id));
+            Assert.Equal(0, context.Books.AsNoTracking().Count(a => author.Books.Select(b => b.Id).Contains(a.Id)));
         }
 
         #endregion

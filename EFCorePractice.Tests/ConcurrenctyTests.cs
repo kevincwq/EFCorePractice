@@ -9,15 +9,11 @@ using Xunit.Abstractions;
 
 namespace EFCorePractice.Tests
 {
-    public class ConcurrenctyTests : IClassFixture<DbContextFixture>
+    public class ConcurrenctyTests : TestBase
     {
-        DbContextFixture dbFixture;
-        private readonly ITestOutputHelper output;
-
         public ConcurrenctyTests(ITestOutputHelper output, DbContextFixture fixture)
+            :base(output, fixture)
         {
-            this.output = output;
-            this.dbFixture = fixture;
         }
 
         [Fact]
@@ -25,6 +21,7 @@ namespace EFCorePractice.Tests
         {
             // Arrange
             var context_a = await dbFixture.CreateContextAsync();
+            var context_b = await dbFixture.CreateContextAsync();
             var contact_a = new Contact
             {
                 FirstName = "William",
@@ -35,7 +32,6 @@ namespace EFCorePractice.Tests
             await context_a.SaveChangesAsync();
 
             // Act
-            var context_b = await dbFixture.CreateContextAsync();
             var contact_b = context_b.Contacts.SingleOrDefault(c => c.Email == contact_a.Email);
 
             contact_a.FirstName = "William II";
@@ -43,15 +39,14 @@ namespace EFCorePractice.Tests
 
             // TODO: SQLITE DOES NOT THROW EXCEPTION
             contact_b.FirstName = "William IIII";
-            //await Assert.ThrowsAsync<DbUpdateConcurrencyException>(() => context_b.SaveChangesAsync());
-            Assert.True(0 < await context_b.SaveChangesAsync());
+            await Assert.ThrowsAsync<DbUpdateConcurrencyException>(() => context_b.SaveChangesAsync());
+            // Assert.True(0 < await context_b.SaveChangesAsync());
 
-            contact_b = context_b.Contacts.SingleOrDefault(c => c.Email == contact_a.Email);
+            context_b.Entry(contact_b).Reload();
             contact_b.FirstName = "William III";
             Assert.True(0 < await context_b.SaveChangesAsync());
 
             // Assert
-
             context_a.Entry(contact_a).Reload();
             Assert.Equal(contact_b.FirstName, contact_a.FirstName);
         }
