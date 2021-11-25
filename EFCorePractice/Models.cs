@@ -129,7 +129,8 @@ namespace EFCorePractice
 
         public Address Address { get; set; }
 
-        // Many to Many
+        // One to Many
+        // a Collection navigation property having a multiplicity of many
         public ICollection<Book> Books { get; set; } = new List<Book>();
     }
 
@@ -318,6 +319,7 @@ namespace EFCorePractice
             // TPT: A separate table is used to represent each type in the inheritance chain, including abstract types. Tables that represent derived types are related to their base type via foreign keys.
 
             // TPH: One table is used to represent all classes in the hierarchy. A "discriminator" column is used to discriminate between differing types. The table takes the name of the base class or its associated DbSet property by default.
+
             entityTypeBuilder.ToTable("Contracts")
             .HasDiscriminator(c => c.ContractType)
             .HasValue<TvContract>("Tv")
