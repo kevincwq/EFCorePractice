@@ -37,7 +37,7 @@ namespace EFCorePractice.Tests
             {
                 return new DbContextOptionsBuilder<AppDbContext>()
                     .UseSqlite(CreateInMemoryDatabase())
-                     //.EnableSensitiveDataLogging()
+                    .EnableSensitiveDataLogging()
                     .LogTo(s => LogTo?.Invoke(s), Microsoft.Extensions.Logging.LogLevel.Information)
                     .Options;
             }
@@ -45,7 +45,7 @@ namespace EFCorePractice.Tests
             {
                 return new DbContextOptionsBuilder<AppDbContext>()
                     .UseSqlServer("Server=(localdb)\\MSSQLLocalDB;Database=EFCorePractice;Trusted_Connection=True;MultipleActiveResultSets=true;ConnectRetryCount=0")
-                    //.EnableSensitiveDataLogging()
+                    .EnableSensitiveDataLogging()
                     .LogTo(s => LogTo?.Invoke(s), Microsoft.Extensions.Logging.LogLevel.Information)
                     .Options;
             }
