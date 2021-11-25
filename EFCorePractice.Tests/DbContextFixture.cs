@@ -3,7 +3,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using System;
 using System.Data.Common;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
@@ -29,7 +28,6 @@ namespace EFCorePractice.Tests
         public DbContextFixture()
         {
             _options = BuildDbContextOptions(false);
-
             _connection = RelationalOptionsExtension.Extract(_options).Connection;
         }
 
@@ -38,13 +36,17 @@ namespace EFCorePractice.Tests
             if (sqlite)
             {
                 return new DbContextOptionsBuilder<AppDbContext>()
-                 .UseSqlite(CreateInMemoryDatabase())
-                 .Options;
+                    .UseSqlite(CreateInMemoryDatabase())
+                     //.EnableSensitiveDataLogging()
+                    .LogTo(s => LogTo?.Invoke(s), Microsoft.Extensions.Logging.LogLevel.Information)
+                    .Options;
             }
             else
             {
                 return new DbContextOptionsBuilder<AppDbContext>()
                     .UseSqlServer("Server=(localdb)\\MSSQLLocalDB;Database=EFCorePractice;Trusted_Connection=True;MultipleActiveResultSets=true;ConnectRetryCount=0")
+                    //.EnableSensitiveDataLogging()
+                    .LogTo(s => LogTo?.Invoke(s), Microsoft.Extensions.Logging.LogLevel.Information)
                     .Options;
             }
         }
@@ -58,9 +60,12 @@ namespace EFCorePractice.Tests
 
         public void Dispose()
         {
+            LogTo = null;
             ClearAllData(new AppDbContext(_options));
             _connection?.Dispose();
         }
+
+        public Action<string> LogTo { get; set; }
 
         /// <summary>
         /// SQLite is a relational provider and can also use in-memory databases.
@@ -80,7 +85,6 @@ namespace EFCorePractice.Tests
                 // await context.Database.EnsureDeletedAsync();
                 await context.Database.MigrateAsync();
             }
-
             return context;
         }
 

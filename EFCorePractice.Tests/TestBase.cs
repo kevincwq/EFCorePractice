@@ -14,6 +14,8 @@ namespace EFCorePractice.Tests
         {
             this.output = output;
             this.dbFixture = fixture;
+
+            fixture.LogTo = output.WriteLine;
         }
     }
 }
