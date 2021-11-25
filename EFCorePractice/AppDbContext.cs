@@ -11,7 +11,7 @@ namespace EFCorePractice
         public AppDbContext(DbContextOptions<AppDbContext> options)
             : base(options)
         {
-
+            this.SavingChanges += (s, e) => UpdateUtcs();
         }
 
         public DbSet<Book> Books { get; set; }
@@ -59,17 +59,17 @@ namespace EFCorePractice
             }
         }
 
-        public override int SaveChanges(bool acceptAllChangesOnSuccess)
-        {
-            UpdateUtcs();
-            return base.SaveChanges(acceptAllChangesOnSuccess);
-        }
+        //public override int SaveChanges(bool acceptAllChangesOnSuccess)
+        //{
+        //    UpdateUtcs();
+        //    return base.SaveChanges(acceptAllChangesOnSuccess);
+        //}
 
-        public async override Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
-        {
-            UpdateUtcs();
-            return await base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
-        }
+        //public async override Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
+        //{
+        //    UpdateUtcs();
+        //    return await base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+        //}
     }
 
     public static class IdentityHelpers
